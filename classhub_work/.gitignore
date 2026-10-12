@@ -8,3 +8,5 @@ uploads/*
 backend/uploads/*
 !uploads/.gitkeep
 .DS_Store
+
+*.log
