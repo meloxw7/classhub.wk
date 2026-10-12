@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import { api, fileUrl } from '../lib/api';
+import { api, fileUrl, downloadCsv } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { enableNotifications } from '../lib/pwa';
 import { useToast } from '../components/Toast';
@@ -1868,7 +1868,7 @@ export function Attendance() {
       {user?.role === 'PROFESSOR' ? (
         <>
           <div className="card p-5">
-            <div className="grid md:grid-cols-3 gap-2">
+            <div className="grid md:grid-cols-4 gap-2">
               <select
                 className="input"
                 value={subjectId}
@@ -1891,6 +1891,21 @@ export function Attendance() {
               <button className="btn-primary" onClick={open}>
                 <Clock size={16} />
                 Abrir chamada
+              </button>
+
+              <button
+                className="btn-secondary"
+                onClick={async () => {
+                  try {
+                    await downloadCsv('/attendance/export', 'presencas-classhub.csv');
+                    toast.success('CSV exportado.');
+                  } catch {
+                    toast.error('Não foi possível exportar o CSV.');
+                  }
+                }}
+              >
+                <Download size={16} />
+                Exportar CSV
               </button>
             </div>
 

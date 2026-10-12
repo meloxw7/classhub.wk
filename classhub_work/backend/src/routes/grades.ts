@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../lib/db';
-import { auth, AuthRequest } from '../middleware/auth';
+import { auth, role, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 router.use(auth);
@@ -12,6 +12,56 @@ function pct(part: number, total: number): number | null {
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+router.get('/export', role('PROFESSOR'), async (_req, res) => {
+  const [students, subjects, subs, atts, sessions] = await Promise.all([
+    pool.query("SELECT id, name, email FROM users WHERE role='ALUNO' ORDER BY name"),
+    pool.query('SELECT id, name, code FROM subjects ORDER BY name'),
+    pool.query(
+      `SELECT s.student_id, a.subject_id,
+              COUNT(s.id)::int submitted,
+              COUNT(s.score)::int graded,
+              AVG(s.score / a.max_score * 10)::float avg_score
+       FROM submissions s JOIN assignments a ON a.id = s.assignment_id
+       GROUP BY s.student_id, a.subject_id`
+    ),
+    pool.query(
+      `SELECT r.student_id, ss.subject_id, COUNT(*)::int attended
+       FROM attendance_records r JOIN attendance_sessions ss ON ss.id = r.session_id
+       GROUP BY r.student_id, ss.subject_id`
+    ),
+    pool.query('SELECT subject_id, COUNT(*)::int total FROM attendance_sessions GROUP BY subject_id'),
+  ]);
+  const subsMap = new Map(subs.rows.map((r: any) => [`${r.student_id}:${r.subject_id}`, r]));
+  const attMap = new Map(atts.rows.map((r: any) => [`${r.student_id}:${r.subject_id}`, r]));
+  const sessMap = new Map(sessions.rows.map((r: any) => [r.subject_id, r.total]));
+  const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = ['Aluno;Email;Disciplina;Entregas;Corrigidas;Media (0-10);Presenca;Presencas/Sessoes'];
+  for (const u of students.rows) {
+    for (const s of subjects.rows) {
+      const g = subsMap.get(`${u.id}:${s.id}`);
+      const a = attMap.get(`${u.id}:${s.id}`);
+      const total = sessMap.get(s.id) || 0;
+      const attended = a?.attended || 0;
+      const avg = g?.avg !== null && g?.avg !== undefined ? round1(g.avg) : '';
+      lines.push(
+        [
+          esc(u.name),
+          esc(u.email),
+          esc(s.name),
+          g?.submitted || 0,
+          g?.graded || 0,
+          avg,
+          total ? `${pct(attended, total)}%` : '',
+          `${attended}/${total}`,
+        ].join(';')
+      );
+    }
+  }
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="boletim-classhub.csv"');
+  res.send('\ufeff' + lines.join('\r\n'));
+});
 
 router.get('/', async (req: AuthRequest, res) => {
   const subjects = await pool.query('SELECT id, name, code FROM subjects ORDER BY name');

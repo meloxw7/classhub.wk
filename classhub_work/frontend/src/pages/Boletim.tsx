@@ -3,11 +3,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   ClipboardList,
+  Download,
   GraduationCap,
   PieChart,
   UsersRound,
 } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, downloadCsv } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../components/Toast';
 import { EmptyState, Skeleton, SkeletonCard } from '../components/Feedback';
@@ -293,12 +294,28 @@ export default function Boletim() {
 
   return (
     <div>
-      <div className="mb-7">
-        <p className="text-blue-600 font-semibold">Desempenho</p>
-        <h2 className="section-title mt-1">Boletim da turma</h2>
-        <p className="muted mt-2">
-          Médias (0–10) e presença de cada aluno por disciplina. Células vazias indicam sem registro.
-        </p>
+      <div className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-blue-600 font-semibold">Desempenho</p>
+          <h2 className="section-title mt-1">Boletim da turma</h2>
+          <p className="muted mt-2">
+            Médias (0–10) e presença de cada aluno por disciplina. Células vazias indicam sem registro.
+          </p>
+        </div>
+        <button
+          className="btn-secondary shrink-0"
+          onClick={async () => {
+            try {
+              await downloadCsv('/grades/export', 'boletim-classhub.csv');
+              toast.success('CSV exportado.');
+            } catch {
+              toast.error('Não foi possível exportar o CSV.');
+            }
+          }}
+        >
+          <Download size={16} />
+          Exportar CSV
+        </button>
       </div>
 
       {prof.subjects.length === 0 || prof.students.length === 0 ? (

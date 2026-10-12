@@ -328,23 +328,28 @@ export default function Dashboard() {
 
               {!loading &&
                 bySubject.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${subjectColor(s.name)}`}
-                      >
-                        {initials(s.name)}
+                  <div key={s.id} className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${subjectColor(s.name)}`}
+                        >
+                          {initials(s.name)}
+                        </span>
+
+                        <p className="font-semibold text-sm truncate">{s.name}</p>
+                      </div>
+
+                      <span className="text-sm font-black text-blue-600 shrink-0">
+                        {s.count} {s.count === 1 ? 'tarefa' : 'tarefas'}
                       </span>
-
-                      <p className="font-semibold text-sm truncate">{s.name}</p>
                     </div>
-
-                    <span className="text-sm font-black text-blue-600 shrink-0">
-                      {s.count} {s.count === 1 ? 'tarefa' : 'tarefas'}
-                    </span>
+                    <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                        style={{ width: `${(s.count / Math.max(...bySubject.map((x) => x.count))) * 100}%` }}
+                      />
+                    </div>
                   </div>
                 ))}
 

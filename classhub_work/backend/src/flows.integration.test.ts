@@ -375,6 +375,34 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
     refId = '';
   });
 
+  it('busca global encontra itens do sandbox e respeita visibilidade', async () => {
+    const res = await alu().get('/api/search?q=' + encodeURIComponent('[QA]'));
+    expect(res.status).toBe(200);
+    expect(res.body.materials.some((m: any) => m.id === materialId)).toBe(true);
+    expect(res.body.events.length).toBeGreaterThan(0);
+    expect(res.body.notices.some((n: any) => n.id === noticeId)).toBe(true);
+    expect(res.body.forum.some((f: any) => f.id === questionId)).toBe(true);
+    const professorView = await prof().get('/api/search?q=' + encodeURIComponent('Revisão pessoal'));
+    expect(professorView.body.events.length).toBe(0);
+    const short = await alu().get('/api/search?q=a');
+    expect(short.body).toEqual({ materials: [], events: [], forum: [], notices: [] });
+  });
+
+  it('CSV: exporta presenças e boletim (professor); aluno é bloqueado', async () => {
+    const denied1 = await alu().get('/api/attendance/export');
+    expect(denied1.status).toBe(403);
+    const denied2 = await alu().get('/api/grades/export');
+    expect(denied2.status).toBe(403);
+    const presencas = await prof().get('/api/attendance/export');
+    expect(presencas.status).toBe(200);
+    expect(presencas.headers['content-type']).toContain('text/csv');
+    expect(presencas.text).toContain('Disciplina;Abertura;Encerramento;Presentes');
+    expect(presencas.text).toContain('[QA] Disciplina de Testes');
+    const boletim = await prof().get('/api/grades/export');
+    expect(boletim.status).toBe(200);
+    expect(boletim.text).toContain('Aluno;Email;Disciplina;Entregas;Corrigidas');
+  });
+
   it('exclusões: professor remove trabalho e material', async () => {
     const delAssignment = await prof().delete(`/api/assignments/${assignmentId}`);
     expect(delAssignment.status).toBe(204);

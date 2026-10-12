@@ -38,6 +38,18 @@ export function refreshSession(): Promise<string | null> {
   });
 }
 
+export async function downloadCsv(path: string, filename: string): Promise<void> {
+  const r = await api.get(path, { responseType: 'blob' });
+  const url = URL.createObjectURL(r.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function clearSession() {
   localStorage.removeItem('classhub_token');
   localStorage.removeItem('classhub_refresh');

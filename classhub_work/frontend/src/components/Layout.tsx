@@ -17,6 +17,9 @@ import {
   Bell,
   GraduationCap,
   BookMarked,
+  Moon,
+  Sun,
+  Search as SearchIcon,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { api, fileUrl } from '../lib/api';
@@ -26,6 +29,16 @@ export default function Layout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [dark, setDark] = useState(
+    () =>
+      typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    try {
+      localStorage.setItem('classhub_theme', dark ? 'dark' : 'light');
+    } catch {}
+  }, [dark]);
   useEffect(() => {
     const load = () =>
       api
@@ -38,6 +51,7 @@ export default function Layout() {
   }, []);
   const nav = [
     ['/', 'Dashboard', LayoutDashboard],
+    ['/busca', 'Busca', SearchIcon],
     ['/disciplinas', 'Disciplinas', BookOpen],
     ['/materiais', 'Materiais', FileText],
     ['/notas', 'Bloco de notas', NotebookPen],
@@ -51,7 +65,7 @@ export default function Layout() {
     ['/abnt', 'Conversor ABNT', BookMarked],
   ] as const;
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 text-white p-5 transform transition ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
       >
@@ -141,15 +155,24 @@ export default function Layout() {
         </button>
       </aside>
       <main className="md:ml-72 min-h-screen">
-        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200 px-4 md:px-8 py-4 flex items-center gap-4">
+        <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 md:px-8 py-4 flex items-center gap-4">
           <button className="md:hidden" onClick={() => setOpen(true)}>
             <Menu />
           </button>
           <div>
             <h1 className="font-bold text-lg">Olá, {user?.name?.split(' ')[0]} 👋</h1>
-            <p className="text-xs text-slate-500">Tudo organizado em um só lugar.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Tudo organizado em um só lugar.
+            </p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setDark((d) => !d)}
+              title={dark ? 'Modo claro' : 'Modo escuro'}
+              className="btn-secondary !px-3 !py-2 rounded-xl"
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <NotificationsMenu unread={unread} />
           </div>
         </header>

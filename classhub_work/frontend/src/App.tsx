@@ -21,6 +21,7 @@ import Abnt from './pages/Abnt';
 import Profile from './pages/Profile';
 import Chat from './pages/Chat';
 import Boletim from './pages/Boletim';
+import SearchPage from './pages/Search';
 import { useAuth } from './lib/auth';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/resetar-senha" element={<ResetPassword />} />
             <Route element={<Private />}>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/busca" element={<SearchPage />} />
               <Route path="/disciplinas" element={<Subjects />} />
               <Route path="/disciplinas/:id" element={<SubjectDetail />} />
               <Route path="/materiais" element={<Materials />} />

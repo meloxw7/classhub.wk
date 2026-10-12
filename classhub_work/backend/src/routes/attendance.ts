@@ -10,6 +10,34 @@ router.get('/sessions', role('PROFESSOR'), async (req: AuthRequest, res) => {
   );
   res.json(r.rows);
 });
+router.get('/export', role('PROFESSOR'), async (req: AuthRequest, res) => {
+  const r = await pool.query(
+    `SELECT sub.name subject_name, s.created_at, s.expires_at,
+            (SELECT COUNT(*) FROM attendance_records ar WHERE ar.session_id=s.id)::int present_count,
+            (SELECT COUNT(*) FROM users u WHERE u.role='ALUNO')::int student_count,
+            COALESCE((SELECT string_agg(u.name, ', ' ORDER BY u.name) FROM attendance_records ar JOIN users u ON u.id=ar.student_id WHERE ar.session_id=s.id), '') present_students
+     FROM attendance_sessions s JOIN subjects sub ON sub.id=s.subject_id
+     WHERE s.professor_id=$1 ORDER BY s.created_at DESC`,
+    [req.user!.id]
+  );
+  const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = ['Disciplina;Abertura;Encerramento;Presentes;Total de alunos;Presentes (nomes)'];
+  for (const s of r.rows) {
+    lines.push(
+      [
+        esc(s.subject_name),
+        esc(new Date(s.created_at).toLocaleString('pt-BR')),
+        esc(new Date(s.expires_at).toLocaleString('pt-BR')),
+        s.present_count,
+        s.student_count,
+        esc(s.present_students),
+      ].join(';')
+    );
+  }
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="presencas-classhub.csv"');
+  res.send('\ufeff' + lines.join('\r\n'));
+});
 router.post('/open', role('PROFESSOR'), async (req: AuthRequest, res) => {
   const { subjectId, minutes } = req.body;
   const pin = String(Math.floor(100000 + Math.random() * 900000));

@@ -50,6 +50,32 @@ body {
 .chip {
   @apply text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-2.5 py-1;
 }
+/* modo escuro: sobrescreve as utilitárias compartilhadas */
+.dark body {
+  background: #0b1220;
+  color: #e2e8f0;
+}
+.dark .card {
+  @apply bg-slate-900 border-slate-800;
+}
+.dark .btn-secondary {
+  @apply bg-slate-800 text-slate-200 hover:bg-slate-700;
+}
+.dark .btn-danger {
+  @apply bg-red-950 text-red-300 hover:bg-red-900;
+}
+.dark .input {
+  @apply bg-slate-900 border-slate-700 text-slate-100 focus:ring-blue-900;
+}
+.dark .label {
+  @apply text-slate-300;
+}
+.dark .muted {
+  @apply text-slate-400;
+}
+.dark .chip {
+  @apply bg-slate-800 text-slate-300;
+}
 @keyframes page-in {
   from {
     opacity: 0;

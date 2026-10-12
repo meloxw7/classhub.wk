@@ -22,9 +22,14 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
   - Professor: total de tarefas, provas futuras, entregas recebidas, pendentes de correção
 - Alerta de tarefas atrasadas (aluno) com lista e link "Resolver agora"
 - "Próximas entregas": as 5 mais próximas com selo de urgência (menos de 24h / 48h / esta semana / com calma)
-- Painel "Tarefas por disciplina" (contagem ordenada)
+- Painel "Tarefas por disciplina" com **gráfico de barras** (proporcional ao total)
 - Painel "Próximas provas" (4 primeiras) — respeita a visibilidade: cada usuário vê só as marcações destinadas a si
 - Skeletons de carregamento e estados vazios em todos os painéis
+
+### Busca global
+- Página "Busca" (`/busca`) com resultados instantâneos (debounce de 400ms, mínimo 2 caracteres)
+- Pesquisa em materiais (título, descrição, tags), eventos da agenda (respeitando a visibilidade de destinatários), perguntas do fórum e avisos — até 5 por área
+- Atalho na sidebar; resultados linkam para a página correspondente
 
 ### Disciplinas
 - Listagem em cards com código, iniciais coloridas e professor responsável
@@ -70,6 +75,7 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Professor vê PIN ativo em destaque, histórico das últimas 20 chamadas com contagem de presentes e pode encerrar antecipadamente
 - Aluno registra presença digitando o PIN (só dígitos, 6 posições); PIN inválido/expirado ou presença duplicada retornam erro
 - Histórico de presenças do aluno (disciplina + data/hora)
+- **Exportar CSV** (professor): todas as chamadas com contagem e nomes dos presentes
 
 ### Fórum de dúvidas
 - Pergunta vinculada a um material (aluno ou professor)
@@ -134,7 +140,14 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Atalhos rápidos: publicar material, gerenciar trabalhos, abrir chamada
 - Formulário de publicação de aviso (com opção de fixar)
 
+### Boletim (desempenho)
+- Página "Boletim" (`/boletim`) com visões distintas:
+  - **Aluno**: média geral (0–10), presença, progresso de materiais, pendentes/atrasados e lista de trabalhos com status (`PENDING`/`SUBMITTED`/`GRADED`/`LATE`)
+  - **Professor**: matriz alunos × disciplinas com média, entregas, corrigidas e presença
+- **Exportar CSV** (professor): boletim completo da turma (aluno, disciplina, entregas, corrigidas, média e presença)
+
 ### UX / PWA
+- **Modo escuro**: botão no topo (sol/lua), persiste por usuário no `localStorage`, aplicado antes do React montar (sem flash); utilitárias (.card, .input, botões) adaptadas
 - PWA: manifest + service worker em produção (cache offline); em dev o SW é desregistrado para evitar cache velho
 - Toasts de sucesso/erro em todas as ações
 - Diálogos de confirmação para ações destrutivas
@@ -144,10 +157,12 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Cores determinísticas por disciplina (iniciais) e tons por progresso
 
 ### Infra da API
-- `GET /api/health` para health check
+- `GET /api/health` para health check (isento de rate limit)
 - Documentação interativa da API (Swagger UI) em `GET /api/docs`; spec OpenAPI 3.0 em `GET /api/docs/openapi.json`
 - Uploads servidos estaticamente em `/uploads` (nome de arquivo sanitizado)
 - Erros de upload padronizados (limite de 50 MB)
+- **Rate limit em duas camadas**: global na `/api` (240 req/min por IP, configurável via `API_RATE_LIMIT`) + 30/min no `/api/auth`
+- **Logs estruturados** com pino (JSON em produção, pino-pretty em dev; nível via `LOG_LEVEL`)
 - Índices no banco para materiais por disciplina, eventos por data, destinatários de eventos, trabalhos por prazo, notificações por usuário e referências ABNT por usuário
 - Build TypeScript (`npm run check`, `npm run build`)
 
@@ -202,6 +217,8 @@ cd frontend  && npm run dev     # App em http://localhost:5173
 | Notificações  | `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `PATCH /api/notifications/read-all`, `DELETE /api/notifications`, `DELETE /api/notifications/:id`, `POST /api/notifications/subscribe` |
 | Progresso     | `GET /api/progress` |
 | Estatísticas  | `GET /api/stats` |
+| Busca         | `GET /api/search?q=` (materiais, eventos, fórum, avisos — respeita visibilidade) |
+| CSV           | `GET /api/attendance/export` (professor), `GET /api/grades/export` (boletim da turma, professor) |
 | Health        | `GET /api/health` |
 | Docs          | `GET /api/docs` (Swagger UI), `GET /api/docs/openapi.json` (spec OpenAPI 3.0) |
 
@@ -215,8 +232,8 @@ Backend e frontend usam **Vitest**. Os testes do backend são de dois tipos:
 Cada teste de integração cria os próprios dados em uma disciplina sandbox e limpa tudo ao final (delete em cascata + revogação dos refresh tokens criados); os testes de senha/avatar **restauram o estado original** das contas demo.
 
 ```bash
-cd backend   && npm test              # 58 testes (unit + integração)
-cd frontend  && npm test              # 19 testes (colors, api, Toast, ConfirmDialog)
+cd backend   && npm test              # 68 testes (unit + integração)
+cd frontend  && npm test              # 24 testes (colors, api/interceptor, Toast, ConfirmDialog)
 ```
 
 Cobertura (`npm run test:coverage`): ~73% de linhas no backend e ~66% no frontend. `npm run test:watch` roda em modo watch.

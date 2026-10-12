@@ -21,6 +21,7 @@ import users from './routes/users';
 import abnt from './routes/abnt';
 import chat from './routes/chat';
 import grades from './routes/grades';
+import search from './routes/search';
 import docs from './routes/docs';
 dotenv.config();
 const app = express();
@@ -85,6 +86,7 @@ app.use('/api/users', users);
 app.use('/api/abnt', abnt);
 app.use('/api/chat', chat);
 app.use('/api/grades', grades);
+app.use('/api/search', search);
 app.use('/api/docs', docs);
 app.use((err: any, _req: any, res: any, _next: any) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
