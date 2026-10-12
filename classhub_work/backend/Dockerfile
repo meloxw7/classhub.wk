@@ -16,4 +16,5 @@ COPY --from=build /app/dist ./dist
 COPY backend/scripts ./scripts
 COPY database ./database
 EXPOSE 4000
-CMD ["node", "dist/server.js"]
+# db-init é idempotente: aplica schema/seed apenas em banco vazio
+CMD ["sh", "-c", "node scripts/db-init.mjs && node dist/server.js"]

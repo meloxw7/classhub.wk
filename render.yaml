@@ -1,0 +1,31 @@
+# Blueprint Render — https://render.com/docs/blueprint-spec
+# 1. Crie um repositório no Render apontando para este repo (raiz)
+# 2. O blueprint cria o PostgreSQL, aplica schema no primeiro boot da API
+#    (scripts/db-init.mjs é idempotente) e sobe a API via Docker
+services:
+  - type: web
+    name: classhub-api
+    runtime: docker
+    dockerfilePath: ./classhub_work/backend/Dockerfile
+    dockerContext: ./classhub_work
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: classhub-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        # troque pela URL real do frontend (ex: https://classhub.vercel.app)
+        sync: false
+
+databases:
+  - name: classhub-db
+    plan: free
+    databaseName: classhub
+    user: classhub

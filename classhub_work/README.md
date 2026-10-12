@@ -248,6 +248,31 @@ docker compose up --build
 - **backend**: `npm run check` + `lint` + `db:init` (Postgres 16 como service) + `npm test` (integração inclusa) + `build`.
 - **frontend**: `npm run check` + `lint` + `npm test` + `build`.
 
+## Deploy (Render + Vercel)
+
+Configuração pronta no repo — só precisa criar as contas e apontar.
+
+### API + PostgreSQL (Render)
+
+1. Em https://render.com → **New → Blueprint** → aponte para o repositório (raiz). O `render.yaml` cria:
+   - Postgres `classhub-db` (free) com database/user `classhub`;
+   - Web service `classhub-api` via `backend/Dockerfile` (build + produção), health check em `/api/health`.
+2. Ao pedir o valor de `CLIENT_URL`, informe a URL do frontend do passo seguinte (ex: `https://classhub.vercel.app`).
+3. No primeiro boot a API aplica `database/schema.sql` + `seed.sql` automaticamente (`db-init` é **idempotente** — pula se o schema já existe; contas demo já incluídas).
+4. Anote a URL da API (ex: `https://classhub-api.onrender.com`).
+
+### Frontend (Vercel)
+
+1. Em https://vercel.com → **Add New → Project** → mesmo repositório, **Root Directory: `classhub_work/frontend`** (framework Vite detectado automaticamente).
+2. Environment Variable: `VITE_API_URL` = `https://sua-api.onrender.com/api` (URL da API do Render + `/api`).
+3. Deploy. O `vercel.json` cuida das rewrites de SPA.
+
+### Observações de produção
+
+- **HTTPS**: Vercel e Render entregam HTTPS — requisito para notificações Push do navegador.
+- **Uploads**: no Render free o disco é efêmero — arquivos enviados somem a cada re deploy. Para persistência real, use o `docker-compose.yml` (VPS própria) ou migre uploads para storage externo.
+- **SMTP / VAPID**: para recuperação de senha e push real em produção, preencha `SMTP_*` (Render: env vars do serviço) e gere chaves VAPID com `npm run vapid:gen` (backend).
+
 ## Build de produção
 
 ```bash

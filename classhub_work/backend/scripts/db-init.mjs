@@ -14,12 +14,19 @@ const files = [resolve('..', 'database', 'schema.sql'), resolve('..', 'database'
 const client = new pg.Client({ connectionString: url });
 try {
   await client.connect();
-  for (const file of files) {
-    process.stdout.write(`Aplicando ${file} ... `);
-    await client.query(readFileSync(file, 'utf8'));
-    console.log('ok');
+  const existing = await client.query(
+    "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='users' LIMIT 1"
+  );
+  if (existing.rowCount) {
+    console.log('Schema já aplicado — nada a fazer.');
+  } else {
+    for (const file of files) {
+      process.stdout.write(`Aplicando ${file} ... `);
+      await client.query(readFileSync(file, 'utf8'));
+      console.log('ok');
+    }
+    console.log('Banco ClassHub inicializado com sucesso.');
   }
-  console.log('Banco ClassHub inicializado com sucesso.');
 } catch (error) {
   console.error('Falha ao inicializar o banco:', error?.message || error);
   process.exit(1);
