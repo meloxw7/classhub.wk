@@ -1,0 +1,9 @@
+INSERT INTO users (name,email,password_hash,role) VALUES ('Prof. Ana Martins','professor@classhub.local',crypt('123456', gen_salt('bf')),'PROFESSOR'),('Lucas Melo','aluno@classhub.local',crypt('123456', gen_salt('bf')),'ALUNO');
+INSERT INTO subjects (name,code,professor_id) SELECT 'Engenharia de Software','ES-26.2',id FROM users WHERE email='professor@classhub.local';
+INSERT INTO subjects (name,code,professor_id) SELECT 'Banco de Dados','BD-26.2',id FROM users WHERE email='professor@classhub.local';
+INSERT INTO materials (subject_id,title,description,type,url,tags) SELECT id,'Introdução à Engenharia de Requisitos','Material inicial da disciplina','PDF','https://example.com/material.pdf',ARRAY['#slides','#introducao'] FROM subjects WHERE code='ES-26.2';
+INSERT INTO materials (subject_id,title,description,type,url,tags) SELECT id,'Aula prática de requisitos','Vídeo de apoio','VIDEO','https://www.youtube.com/watch?v=dQw4w9WgXcQ',ARRAY['#pratica'] FROM subjects WHERE code='ES-26.2';
+INSERT INTO events (title,description,event_date,type,subject_id) SELECT 'Prova 1','Avaliação de Engenharia de Software',NOW()+INTERVAL '7 days','PROVA',id FROM subjects WHERE code='ES-26.2';
+INSERT INTO assignments (subject_id,title,description,due_date,max_score) SELECT id,'Especificação de Requisitos','Entregar documento com requisitos funcionais.',NOW()+INTERVAL '10 days',10 FROM subjects WHERE code='ES-26.2';
+INSERT INTO notices (subject_id,author_id,title,content,pinned) SELECT s.id,u.id,'Bem-vindo ao ClassHub','Os materiais, avisos e prazos desta disciplina serão centralizados aqui.',true FROM subjects s, users u WHERE s.code='ES-26.2' AND u.role='PROFESSOR';
+INSERT INTO study_rooms(subject_id,name,description,created_by) SELECT id,'Grupo de Estudos — ES','Espaço para compartilhar anotações e links.',(SELECT id FROM users WHERE role='PROFESSOR') FROM subjects WHERE code='ES-26.2';

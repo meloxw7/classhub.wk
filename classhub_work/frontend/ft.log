@@ -1,0 +1,44 @@
+﻿
+> test
+> vitest run
+
+
+ RUN  v5.0.4 C:/Users/tharc/OneDrive/├ürea de Trabalho/ClassHub_Final_Corrigido/classhub_work/frontend
+
+ ÔØ» src/components/ConfirmDialog.test.tsx (4 tests | 1 failed) 659ms
+   ÔØ» ConfirmDialog (4)
+     ├ù n├úo abre di├ílogo fora do provider padr├úo 14ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 18 passed (19)
+   Start at  09:10:08
+   Duration  5.20s (environment 72%, import 19%, tests 6%, transform 2%, worker 1%)
+
+node.exe : 
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 1 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  src/components/ConfirmDialog.test.tsx > ConfirmDialog > n├úo abre di├ílogo fora do provider padr├úo
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ÔØ» src/components/ConfirmDialog.test.tsx:95:22
+     93|       screen.getByText('perguntar').click();
+     94|     });
+     95|     expect(resolved).toBe(true);
+       |                      ^
+     96|   });
+     97| });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/1]ÔÄ»
+

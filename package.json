@@ -1,0 +1,11 @@
+{
+  "name": "classhub-repo",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm --prefix classhub_work/backend run lint && npm --prefix classhub_work/frontend run lint"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
