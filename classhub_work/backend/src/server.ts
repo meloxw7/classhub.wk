@@ -1,10 +1,11 @@
-import http from 'http';
+﻿import http from 'http';
 import jwt from 'jsonwebtoken';
 import { WebSocketServer, WebSocket } from 'ws';
 import app from './app';
 import { pool } from './lib/db';
 import { notifyUsers } from './lib/notify';
 import { getJwtSecret } from './lib/env';
+import { logger } from './lib/logger';
 async function eventReminders() {
   try {
     const r = await pool.query(
@@ -31,15 +32,15 @@ async function eventReminders() {
       });
       await notifyUsers(
         ids,
-        'Amanhã: ' + e.title,
-        `${e.title} está marcado para ${when}${e.subject_name ? ' — ' + e.subject_name : ''}.`,
+        'AmanhÃ£: ' + e.title,
+        `${e.title} estÃ¡ marcado para ${when}${e.subject_name ? ' â€” ' + e.subject_name : ''}.`,
         'EVENT'
       );
       await pool.query('UPDATE events SET reminder_sent_at=NOW() WHERE id=$1', [e.id]);
     }
-    console.log(`Lembretes de evento enviados: ${r.rows.length}`);
+    logger.info(`Lembretes de evento enviados: ${r.rows.length}`);
   } catch (error) {
-    console.error('Erro nos lembretes de evento:', error);
+    logger.error({ err: error }, 'Erro nos lembretes de evento');
   }
 }
 const port = Number(process.env.PORT) || 4000;
@@ -78,7 +79,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     const payload = jwt.verify(url.searchParams.get('token') || '', getJwtSecret()) as any;
     user = { id: payload.id, name: payload.name };
   } catch {
-    ws.close(4001, 'Não autenticado');
+    ws.close(4001, 'NÃ£o autenticado');
     return;
   }
   ws.on('message', async (raw) => {
@@ -137,7 +138,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
           })
         );
       } catch (error) {
-        console.error('Erro no chat:', error);
+        logger.error({ err: error }, 'Erro no chat');
       }
       return;
     }
@@ -165,7 +166,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   ws.on('error', () => {});
 });
 server.listen(port, () => {
-  console.log(`ClassHub API em http://localhost:${port}`);
+  logger.info(`ClassHub API em http://localhost:${port}`);
   eventReminders();
   setInterval(eventReminders, 30 * 60 * 1000);
 });

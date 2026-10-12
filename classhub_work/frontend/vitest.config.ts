@@ -6,5 +6,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
+    environmentOptions: {
+      jsdom: {
+        // pathname em /login: o interceptor não deve redirecionar durante os testes
+        url: 'http://localhost/login',
+      },
+    },
   },
 });

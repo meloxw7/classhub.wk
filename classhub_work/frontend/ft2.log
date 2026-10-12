@@ -1,0 +1,238 @@
+﻿
+> test
+> vitest run
+
+
+ RUN  v5.0.4 C:/Users/tharc/OneDrive/├ürea de Trabalho/ClassHub_Final_Corrigido/classhub_work/frontend
+
+ ÔØ» src/lib/api.test.ts (8 tests | 4 failed) 81ms
+   ÔØ» interceptor de sess├úo (api.ts) (5)
+     ├ù 401 com refresh v├ílido: renova token, repete a requisi├º├úo e salva a nova sess├úo 34ms
+     ├ù 401 com refresh inv├ílido: limpa a sess├úo e propaga o erro (sem redirect fora do /login) 17ms
+     ├ù 401 sem refresh salvo: limpa sess├úo e propaga sem chamar o refresh 5ms
+     ├ù n├úo repete a mesma requisi├º├úo mais de uma vez ap├│s falha de refresh 6ms
+node.exe : 
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 4 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  src/lib/api.test.ts > interceptor de sess├úo (api.ts) > 401 com refresh v├ílido: renova token, repete a 
+requisi├º├úo e salva a nova sess├úo
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ÔØ» src/lib/api.test.ts:59:26
+     57|
+     58|     const res = await api.get('/qualquer');
+     59|     expect(refreshCalls).toBe(1);
+       |                          ^
+     60|     expect(calls).toBe(2);
+     61|     expect(res.status).toBe(200);
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/4]ÔÄ»
+
+ FAIL  src/lib/api.test.ts > interceptor de sess├úo (api.ts) > 401 com refresh inv├ílido: limpa a sess├úo e propaga o 
+erro (sem redirect fora do /login)
+AssertionError: promise resolved "{ status: 401, statusText: '401', ÔÇª(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "config": {
++     "adapter": [Function anonymous],
++     "allowAbsoluteUrls": true,
++     "baseURL": "http://localhost:4000/api",
++     "data": undefined,
++     "env": {
++       "Blob": [Function Blob],
++       "FormData": [Function FormData],
++     },
++     "headers": {
++       "Accept": "application/json, text/plain, */*",
++       "Authorization": "Bearer token-expirado",
++     },
++     "maxBodyLength": -1,
++     "maxContentLength": -1,
++     "method": "get",
++     "timeout": 0,
++     "transformRequest": [
++       [Function transformRequest],
++     ],
++     "transformResponse": [
++       [Function transformResponse],
++     ],
++     "transitional": {
++       "advertiseZstdAcceptEncoding": false,
++       "clarifyTimeoutError": false,
++       "forcedJSONParsing": true,
++       "legacyInterceptorReqResOrdering": true,
++       "silentJSONParsing": true,
++       "validateStatusUndefinedResolves": true,
++     },
++     "url": "/qualquer",
++     "validateStatus": [Function validateStatus],
++     "xsrfCookieName": "XSRF-TOKEN",
++     "xsrfHeaderName": "X-XSRF-TOKEN",
++   },
++   "data": {
++     "message": "expirou",
++   },
++   "headers": {},
++   "request": {},
++   "status": 401,
++   "statusText": "401",
+  }
+
+ ÔØ» src/lib/api.test.ts:75:38
+     73|     (axios.defaults as any).adapter = (config: any) => response(configÔÇª
+     74|
+     75|     await expect(api.get('/qualquer')).rejects.toMatchObject({ responsÔÇª
+       |                                      ^
+     76|     expect(localStorage.getItem('classhub_token')).toBeNull();
+     77|     expect(localStorage.getItem('classhub_refresh')).toBeNull();
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/4]ÔÄ»
+
+ FAIL  src/lib/api.test.ts > interceptor de sess├úo (api.ts) > 401 sem refresh salvo: limpa sess├úo e propaga sem 
+chamar o refresh
+AssertionError: promise resolved "{ status: 401, statusText: '401', ÔÇª(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "config": {
++     "adapter": [Function anonymous],
++     "allowAbsoluteUrls": true,
++     "baseURL": "http://localhost:4000/api",
++     "data": undefined,
++     "env": {
++       "Blob": [Function Blob],
++       "FormData": [Function FormData],
++     },
++     "headers": {
++       "Accept": "application/json, text/plain, */*",
++       "Authorization": "Bearer token-expirado",
++     },
++     "maxBodyLength": -1,
++     "maxContentLength": -1,
++     "method": "get",
++     "timeout": 0,
++     "transformRequest": [
++       [Function transformRequest],
++     ],
++     "transformResponse": [
++       [Function transformResponse],
++     ],
++     "transitional": {
++       "advertiseZstdAcceptEncoding": false,
++       "clarifyTimeoutError": false,
++       "forcedJSONParsing": true,
++       "legacyInterceptorReqResOrdering": true,
++       "silentJSONParsing": true,
++       "validateStatusUndefinedResolves": true,
++     },
++     "url": "/outra",
++     "validateStatus": [Function validateStatus],
++     "xsrfCookieName": "XSRF-TOKEN",
++     "xsrfHeaderName": "X-XSRF-TOKEN",
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  4 failed | 20 passed (24)
+   Start at  14:13:08
+   Duration  6.91s (environment 73%, import 18%, tests 5%, worker 2%, transform 1%)
+
++   },
++   "data": {},
++   "headers": {},
++   "request": {},
++   "status": 401,
++   "statusText": "401",
+  }
+
+ ÔØ» src/lib/api.test.ts:90:35
+     88|     };
+     89|
+     90|     await expect(api.get('/outra')).rejects.toMatchObject({ response: ÔÇª
+       |                                   ^
+     91|     expect(refreshCalls).toBe(0);
+     92|     expect(localStorage.getItem('classhub_token')).toBeNull();
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/4]ÔÄ»
+
+ FAIL  src/lib/api.test.ts > interceptor de sess├úo (api.ts) > n├úo repete a mesma requisi├º├úo mais de uma vez ap├│s 
+falha de refresh
+AssertionError: promise resolved "{ status: 401, statusText: '401', ÔÇª(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "config": {
++     "adapter": [Function anonymous],
++     "allowAbsoluteUrls": true,
++     "baseURL": "http://localhost:4000/api",
++     "data": undefined,
++     "env": {
++       "Blob": [Function Blob],
++       "FormData": [Function FormData],
++     },
++     "headers": {
++       "Accept": "application/json, text/plain, */*",
++     },
++     "maxBodyLength": -1,
++     "maxContentLength": -1,
++     "method": "get",
++     "timeout": 0,
++     "transformRequest": [
++       [Function transformRequest],
++     ],
++     "transformResponse": [
++       [Function transformResponse],
++     ],
++     "transitional": {
++       "advertiseZstdAcceptEncoding": false,
++       "clarifyTimeoutError": false,
++       "forcedJSONParsing": true,
++       "legacyInterceptorReqResOrdering": true,
++       "silentJSONParsing": true,
++       "validateStatusUndefinedResolves": true,
++     },
++     "url": "/repetido",
++     "validateStatus": [Function validateStatus],
++     "xsrfCookieName": "XSRF-TOKEN",
++     "xsrfHeaderName": "X-XSRF-TOKEN",
++   },
++   "data": {},
++   "headers": {},
++   "request": {},
++   "status": 401,
++   "statusText": "401",
+  }
+
+ ÔØ» src/lib/api.test.ts:115:38
+    113|     (axios.defaults as any).adapter = (config: any) => response(configÔÇª
+    114|
+    115|     await expect(api.get('/repetido')).rejects.toMatchObject({ responsÔÇª
+       |                                      ^
+    116|     expect(calls).toBe(2); // original + 1 retry com token novo (que tÔÇª
+    117|   });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/4]ÔÄ»
+

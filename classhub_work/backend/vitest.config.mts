@@ -5,5 +5,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     setupFiles: ['src/test/setup.ts'],
+    // forks = 1 processo por arquivo: env vars (VAPID etc.) isoladas entre testes
+    pool: 'forks',
   },
 });

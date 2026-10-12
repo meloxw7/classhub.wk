@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import fs from 'fs';
+import { Document, Packer, Paragraph, TableOfContents, HeadingLevel } from 'docx';
 import app from './app';
 import { pool } from './lib/db';
 import { hashToken, generateToken } from './lib/tokens';
@@ -267,5 +268,56 @@ describe.skipIf(!hasDb)('extras de autenticação, perfil e ABNT (banco real)', 
     expect(res.headers['content-disposition']).toContain('trabalho-de-qualidade-abnt.docx');
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThan(5000);
+  });
+
+  it('ABNT convert: extrai .docx com capa detectada, títulos reais e TOC removido', async () => {
+    const buf = await Packer.toBuffer(
+      new Document({
+        features: { updateFields: true },
+        sections: [
+          {
+            children: [
+              new Paragraph('Universidade Federal de QA'),
+              new Paragraph('Trabalho apresentado ao curso de Sistemas para Internet.'),
+              new Paragraph('João da Silva'),
+              new Paragraph('Modelagem de testes de qualidade de software'),
+              new Paragraph('Orientador: Prof. Maria Souza'),
+              new Paragraph('Cidade – 2026'),
+              new TableOfContents('Sumário', { hyperlink: true, headingStyleRange: '1-3' }),
+              new Paragraph({ text: 'INTRODUÇÃO', heading: HeadingLevel.HEADING_1 }),
+              new Paragraph('Texto introdutório sobre qualidade.'),
+              new Paragraph({ text: 'Objetivos', heading: HeadingLevel.HEADING_2 }),
+              new Paragraph('Detalhando os objetivos.'),
+            ],
+          },
+        ],
+      })
+    );
+    const res = await alu().post('/api/abnt/convert').attach('file', buf, 'trabalho.docx');
+    expect(res.status).toBe(200);
+    expect(res.body.source).toBe('DOCX');
+    expect(res.body.droppedCover).toBe(6);
+    expect(res.body.detectedCover).toBeTruthy();
+    expect(res.body.detectedCover.institution).toBe('Universidade Federal de QA');
+    expect(res.body.detectedCover.title).toBe('Modelagem de testes de qualidade de software');
+    expect(res.body.detectedCover.author).toBe('João da Silva');
+    expect(res.body.detectedCover.advisor).toBe('Prof. Maria Souza');
+    expect(res.body.detectedCover.course).toBe('Sistemas para Internet');
+    expect(res.body.detectedCover.city).toBe('Cidade');
+    expect(res.body.detectedCover.year).toBe('2026');
+    const texts: string[] = res.body.sections.map((s: any) => s.text);
+    expect(texts).toContain('INTRODUÇÃO');
+    expect(texts).toContain('Texto introdutório sobre qualidade.');
+    expect(res.body.sections.find((s: any) => s.text === 'INTRODUÇÃO').level).toBe(1);
+    expect(res.body.sections.find((s: any) => s.text === 'Objetivos').level).toBe(2);
+    // entradas do sumário não viram seções
+    expect(texts.some((t) => /sumário|sumario/i.test(t))).toBe(false);
+  });
+
+  it('ABNT convert: .docx corrompido cai no fallback e retorna 400', async () => {
+    const res = await alu()
+      .post('/api/abnt/convert')
+      .attach('file', Buffer.from('conteudo nao e um zip'), 'quebrado.docx');
+    expect(res.status).toBe(400);
   });
 });

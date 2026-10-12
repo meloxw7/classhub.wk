@@ -37,6 +37,23 @@ app.use('/uploads', express.static(uploadDir));
 app.get('/api/health', (_, res) =>
   res.json({ ok: true, service: 'ClassHub API', time: new Date().toISOString() })
 );
+const apiHits = new Map<string, { n: number; t: number }>();
+const API_LIMIT = Number(process.env.API_RATE_LIMIT) || 240;
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') return next();
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const h = apiHits.get(ip);
+  if (!h || now - h.t > 60000) {
+    if (apiHits.size > 5000) apiHits.clear();
+    apiHits.set(ip, { n: 1, t: now });
+    return next();
+  }
+  h.n++;
+  if (h.n > API_LIMIT)
+    return res.status(429).json({ message: 'Muitas requisições. Tente novamente em instantes.' });
+  next();
+});
 const hits = new Map<string, { n: number; t: number }>();
 app.use('/api/auth', (req, res, next) => {
   const ip = req.ip || 'unknown';

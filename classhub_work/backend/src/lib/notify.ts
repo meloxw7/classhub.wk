@@ -1,5 +1,6 @@
 import { pool } from './db';
 import { sendPushToUsers } from './push';
+import { logger } from './logger';
 
 export async function notifyUsers(
   userIds: string[],
@@ -13,7 +14,7 @@ export async function notifyUsers(
     [userIds, title, body, type]
   );
   sendPushToUsers(userIds, { title, body, type }).catch((error) =>
-    console.error('Erro ao enviar push:', error)
+    logger.error({ err: error }, 'Erro ao enviar push')
   );
 }
 
