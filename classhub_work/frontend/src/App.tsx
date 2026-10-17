@@ -22,6 +22,7 @@ import Profile from './pages/Profile';
 import Chat from './pages/Chat';
 import Boletim from './pages/Boletim';
 import SearchPage from './pages/Search';
+import Tutor from './pages/Tutor';
 import { useAuth } from './lib/auth';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
@@ -48,6 +49,7 @@ export default function App() {
             <Route element={<Private />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/busca" element={<SearchPage />} />
+              <Route path="/tutor" element={<Tutor />} />
               <Route path="/disciplinas" element={<Subjects />} />
               <Route path="/disciplinas/:id" element={<SubjectDetail />} />
               <Route path="/materiais" element={<Materials />} />

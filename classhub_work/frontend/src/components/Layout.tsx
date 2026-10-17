@@ -19,6 +19,7 @@ import {
   Moon,
   Sun,
   Search as SearchIcon,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { api, fileUrl } from '../lib/api';
@@ -78,6 +79,7 @@ export default function Layout() {
       'Ferramentas',
       [
         ['/busca', 'Busca', SearchIcon],
+        ['/tutor', 'Tutor IA', Sparkles],
         ['/abnt', 'Conversor ABNT', BookMarked],
       ],
     ],

@@ -2,6 +2,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
+export const apiBaseURL = baseURL;
+
 export const api = axios.create({ baseURL });
 
 export function fileUrl(path: string) {

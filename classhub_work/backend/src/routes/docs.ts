@@ -31,6 +31,7 @@ const spec = {
     { name: 'Progresso' },
     { name: 'Estatísticas' },
     { name: 'ABNT' },
+    { name: 'Tutor IA' },
     { name: 'Chat' },
     { name: 'Boletim' },
     { name: 'Infra' },
@@ -255,6 +256,35 @@ const spec = {
     },
     '/api/chat/{subjectId}': {
       get: { tags: ['Chat'], summary: 'Últimas 100 mensagens da disciplina' },
+    },
+    '/api/tutor/chat': {
+      post: {
+        tags: ['Tutor IA'],
+        summary: 'Conversa com o tutor (Gemini) — resposta em streaming SSE',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['messages'],
+                properties: {
+                  messages: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        role: { type: 'string', enum: ['user', 'model'] },
+                        content: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/grades': {
       get: { tags: ['Boletim'], summary: 'Notas por disciplina (boletim)' },

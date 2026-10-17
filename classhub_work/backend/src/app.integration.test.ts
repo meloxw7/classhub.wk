@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import app from './app';
 import { pool } from './lib/db';
@@ -6,6 +6,7 @@ import { hashToken } from './lib/tokens';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const createdHashes: string[] = [];
+let alunoToken = '';
 
 afterAll(async () => {
   if (hasDb) {
@@ -49,6 +50,7 @@ describe.skipIf(!hasDb)('fluxo de autenticação (banco real)', () => {
     expect(typeof res.body.token).toBe('string');
     expect(typeof res.body.refreshToken).toBe('string');
     expect(res.body.user).toMatchObject({ email: aluno.email, role: 'ALUNO' });
+    alunoToken = res.body.token;
     createdHashes.push(hashToken(res.body.refreshToken));
   });
 
@@ -234,5 +236,54 @@ describe('documentação Swagger', () => {
     expect(res.status).toBe(200);
     expect(res.body.openapi).toBe('3.0.3');
     expect(Object.keys(res.body.paths)).toContain('/api/health');
+    expect(Object.keys(res.body.paths)).toContain('/api/tutor/chat');
+  });
+});
+
+describe.skipIf(!hasDb)('tutor IA', () => {
+  it('exige autenticação (401)', async () => {
+    const res = await request(app).post('/api/tutor/chat').send({ messages: [] });
+    expect(res.status).toBe(401);
+  });
+
+  it('recusa payload inválido (400)', async () => {
+    const res = await request(app)
+      .post('/api/tutor/chat')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .send({ messages: [{ role: 'model', content: 'oi' }] });
+    expect(res.status).toBe(400);
+  });
+
+  it('transmite chunks do provedor em streaming (fetch mockado)', async () => {
+    const encoder = new TextEncoder();
+    const sse = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            'data: {"candidates":[{"content":{"parts":[{"text":"Olá"}]}}]}\n\n'
+          )
+        );
+        controller.enqueue(
+          encoder.encode(
+            'data: {"candidates":[{"content":{"parts":[{"text":", tudo bem?"}]}}]}\n\n'
+          )
+        );
+        controller.close();
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, body: sse }))
+    );
+    const res = await request(app)
+      .post('/api/tutor/chat')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .send({ messages: [{ role: 'user', content: 'oi' }] });
+    vi.unstubAllGlobals();
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/event-stream');
+    expect(res.text).toContain('"text":"Olá"');
+    expect(res.text).toContain('"text":", tudo bem?"');
+    expect(res.text).toContain('[DONE]');
   });
 });
