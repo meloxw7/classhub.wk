@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Loader2, Save, ShieldCheck, UserRound, Building2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, Pencil, Save, ShieldCheck, UserRound, Building2 } from 'lucide-react';
 
 import { api, fileUrl } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -25,6 +25,7 @@ export default function Profile() {
   const [savingPassword, setSavingPassword] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [passwords, setPasswords] = useState({
     current: '',
@@ -173,27 +174,40 @@ export default function Profile() {
               <h3 className="font-bold mb-4">Dados pessoais</h3>
 
               <div className="flex items-end gap-4 mb-5">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Foto de perfil"
-                    className="w-16 h-16 rounded-full object-cover border border-slate-200 ring-4 ring-white dark:ring-[#14141a]"
-                  />
-                ) : (
-                  <span className="w-16 h-16 rounded-full bg-violet-600 text-white grid place-items-center shrink-0 ring-4 ring-white dark:ring-[#14141a]">
-                    <UserRound size={26} />
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  title="Alterar foto de perfil"
+                  className="relative group rounded-full transition duration-200 hover:scale-105 active:scale-95 shrink-0"
+                >
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Foto de perfil"
+                      className="w-16 h-16 rounded-full object-cover border border-slate-200 ring-4 ring-white dark:ring-[#14141a]"
+                    />
+                  ) : (
+                    <span className="w-16 h-16 rounded-full bg-violet-600 text-white grid place-items-center shrink-0 ring-4 ring-white dark:ring-[#14141a]">
+                      <UserRound size={26} />
+                    </span>
+                  )}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-violet-600 border-2 border-white dark:border-[#14141a] grid place-items-center text-white shadow-md transition-transform duration-200 group-hover:scale-110">
+                    <Pencil size={12} />
                   </span>
-                )}
+                </button>
 
                 <div>
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    className="input text-sm"
-                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-                  />
-
-                  <p className="text-xs text-slate-400 mt-1">JPG ou PNG, até 2 MB.</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Foto de perfil
+                  </p>
 
                   {avatarFile && (
                     <button className="btn-primary mt-2" onClick={saveAvatar} disabled={savingAvatar}>

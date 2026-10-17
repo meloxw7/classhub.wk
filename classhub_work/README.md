@@ -184,7 +184,9 @@ cd backend   && npm run dev     # API em http://localhost:4000
 cd frontend  && npm run dev     # App em http://localhost:5173
 ```
 
-## Contas demo
+## Contas demo (apenas desenvolvimento)
+
+Criadas pelo `seed.sql` para testes locais — em produção, use o cadastro self-service:
 
 | Perfil    | E-mail                    | Senha  |
 |-----------|---------------------------|--------|

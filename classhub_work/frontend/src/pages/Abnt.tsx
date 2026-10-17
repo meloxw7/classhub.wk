@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BookMarked,
   Download,
@@ -8,6 +8,7 @@ import {
   Save,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react';
 
 import { api } from '../lib/api';
@@ -183,6 +184,8 @@ export default function Abnt() {
   const [tab, setTab] = useState<'converter' | 'referencias'>('converter');
 
   const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [converting, setConverting] = useState(false);
   const [includeRefs, setIncludeRefs] = useState(true);
@@ -485,11 +488,69 @@ export default function Abnt() {
             <h3 className="font-bold mb-3">1. Enviar documento</h3>
 
             <input
+              ref={fileInputRef}
               type="file"
               accept=".docx,.pdf,.txt,.md"
-              className="input mb-3"
+              className="hidden"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
+
+            {file ? (
+              <div className="flex items-center gap-3 rounded-2xl border border-violet-200 dark:border-violet-900 bg-violet-50/60 dark:bg-violet-950/30 p-4 mb-3">
+                <span className="p-2.5 rounded-xl bg-violet-100 dark:bg-violet-900 text-violet-600 dark:text-violet-300 shrink-0">
+                  <FileText size={18} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-100">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {(file.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="ml-auto p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition shrink-0"
+                  title="Remover arquivo"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  const dropped = e.dataTransfer.files?.[0];
+                  if (dropped) setFile(dropped);
+                }}
+                className={`w-full rounded-2xl border-2 border-dashed p-8 mb-3 text-center transition-all duration-200 group ${
+                  dragging
+                    ? 'border-violet-500 bg-violet-50/70 dark:bg-violet-950/40 scale-[1.01]'
+                    : 'border-slate-300 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 hover:bg-violet-50/40 dark:hover:bg-violet-950/20'
+                }`}
+              >
+                <span className="inline-grid place-items-center w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900 text-violet-600 dark:text-violet-300 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-3">
+                  <Upload size={20} />
+                </span>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-3">
+                  Clique para escolher
+                  <span className="muted font-normal"> ou arraste o arquivo aqui</span>
+                </p>
+                <p className="text-xs text-slate-400 mt-1">.docx, .pdf, .txt ou .md — máx. 50 MB</p>
+              </button>
+            )}
 
             <button className="btn-primary" onClick={convert} disabled={converting || !file}>
               {converting ? (
@@ -506,10 +567,10 @@ export default function Abnt() {
             </button>
 
             <p className="text-xs text-slate-400 mt-2">
-              Formatos aceitos: .docx, .pdf e .txt (máx. 50 MB). Conversão completa: caixas de texto
-              (capas), tabelas e imagens do original são preservadas. O sumário é gerado
-              automaticamente — os números de página corretos aparecem ao abrir o .docx no Word. A
-              capa original é detectada e pré-preenche o formulário.
+              Conversão completa: caixas de texto (capas), tabelas e imagens do original são
+              preservadas. O sumário é gerado automaticamente — os números de página corretos
+              aparecem ao abrir o .docx no Word. A capa original é detectada e pré-preenche o
+              formulário.
             </p>
           </div>
 

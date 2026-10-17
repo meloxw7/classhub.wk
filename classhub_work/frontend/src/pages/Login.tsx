@@ -5,8 +5,8 @@ import { Navigate, Link } from 'react-router-dom';
 
 export default function Login() {
   const { user, login } = useAuth();
-  const [email, setEmail] = useState('aluno@classhub.local'),
-    [password, setPassword] = useState('123456'),
+  const [email, setEmail] = useState(''),
+    [password, setPassword] = useState(''),
     [remember, setRemember] = useState(true),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(false);
@@ -24,11 +24,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function fill(kind: 'aluno' | 'professor') {
-    setEmail(`${kind}@classhub.local`);
-    setPassword('123456');
   }
 
   return (
@@ -76,6 +71,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
           <label className="label">Senha</label>
@@ -86,6 +82,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
           <label className="flex items-center gap-2 mt-3 select-none cursor-pointer">
@@ -112,25 +109,6 @@ export default function Login() {
               Criar conta
             </Link>
           </p>
-          <div className="mt-5">
-            <p className="text-xs font-semibold text-slate-500 mb-2">Acesso rápido (demo):</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => fill('aluno')}
-                className="btn-secondary flex-1 text-sm py-2"
-              >
-                Aluno
-              </button>
-              <button
-                type="button"
-                onClick={() => fill('professor')}
-                className="btn-secondary flex-1 text-sm py-2"
-              >
-                Professor
-              </button>
-            </div>
-          </div>
         </form>
       </div>
     </div>

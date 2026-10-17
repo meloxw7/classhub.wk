@@ -214,6 +214,42 @@ body {
 .fade-slide-in {
   animation: fade-slide-in 0.3s ease-out;
 }
+/* ---- scrollbar ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.dark * {
+  scrollbar-color: #33333f transparent;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #33333f;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #45454f;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
