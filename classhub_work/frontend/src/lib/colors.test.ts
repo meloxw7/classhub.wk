@@ -8,7 +8,9 @@ describe('subjectColor', () => {
 
   it('devolve sempre uma classe da paleta', () => {
     for (const name of ['A', 'B', 'C', 'Disciplina Longa', 'x y z']) {
-      expect(subjectColor(name)).toMatch(/^bg-\w+-100 text-\w+-700$/);
+      expect(subjectColor(name)).toMatch(
+        /^bg-\w+-100 text-\w+-700 dark:bg-\w+-900\/70 dark:text-\w+-300$/
+      );
     }
   });
 });

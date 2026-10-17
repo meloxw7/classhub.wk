@@ -11,9 +11,9 @@ type ToastItem = {
 };
 
 const styles: Record<ToastType, { icon: typeof Info; bg: string; bar: string }> = {
-  success: { icon: CheckCircle2, bg: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-500' },
-  error: { icon: XCircle, bg: 'bg-red-50 text-red-600', bar: 'bg-red-500' },
-  info: { icon: Info, bg: 'bg-violet-50 text-violet-600', bar: 'bg-violet-500' },
+  success: { icon: CheckCircle2, bg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400', bar: 'bg-emerald-500' },
+  error: { icon: XCircle, bg: 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400', bar: 'bg-red-500' },
+  info: { icon: Info, bg: 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400', bar: 'bg-violet-500' },
 };
 
 type ToastApi = {

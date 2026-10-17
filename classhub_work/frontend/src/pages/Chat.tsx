@@ -298,7 +298,7 @@ export default function Chat() {
 
         <span
           className={`chip ${
-            connected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+            connected ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/70 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/70 dark:text-amber-300'
           }`}
         >
           {connected ? 'Conectado' : 'Reconectando...'}

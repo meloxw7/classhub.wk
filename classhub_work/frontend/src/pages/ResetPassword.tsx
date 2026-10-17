@@ -62,10 +62,10 @@ export default function ResetPassword() {
             : 'Informe seu e-mail para receber um link de redefinição.'}
         </p>
         {error && (
-          <div className="rounded-xl bg-red-50 text-red-700 p-3 text-sm mt-4">{error}</div>
+          <div className="rounded-xl bg-red-50 text-red-700 dark:bg-red-950/70 dark:text-red-300 p-3 text-sm mt-4">{error}</div>
         )}
         {sent && (
-          <div className="rounded-xl bg-emerald-50 text-emerald-700 p-3 text-sm mt-4">
+          <div className="rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 p-3 text-sm mt-4">
             Se o e-mail estiver cadastrado, você receberá o link em instantes.
           </div>
         )}

@@ -61,7 +61,7 @@ export default function Login() {
             <p className="muted mt-1">Acesse seu ambiente acadêmico.</p>
           </div>
           {error && (
-            <div className="rounded-xl bg-red-50 text-red-700 p-3 text-sm mb-4">{error}</div>
+            <div className="rounded-xl bg-red-50 text-red-700 dark:bg-red-950/70 dark:text-red-300 p-3 text-sm mb-4">{error}</div>
           )}
           <label className="label">E-mail</label>
           <div className="relative mb-4">

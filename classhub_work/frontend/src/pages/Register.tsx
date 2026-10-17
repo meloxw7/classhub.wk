@@ -97,7 +97,7 @@ export default function Register() {
             <p className="muted mt-1">Responda o cadastro para entrar no ambiente acadêmico.</p>
           </div>
           {error && (
-            <div className="rounded-xl bg-red-50 text-red-700 p-3 text-sm mb-4">{error}</div>
+            <div className="rounded-xl bg-red-50 text-red-700 dark:bg-red-950/70 dark:text-red-300 p-3 text-sm mb-4">{error}</div>
           )}
 
           <div className="grid grid-cols-2 gap-2 mb-5">
@@ -106,8 +106,8 @@ export default function Register() {
               onClick={() => setRole('ALUNO')}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border-2 transition ${
                 role === 'ALUNO'
-                  ? 'border-violet-600 bg-violet-50 text-violet-700'
-                  : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                  ? 'border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-950/60 dark:text-violet-300'
+                  : 'border-slate-200 text-slate-500 hover:border-slate-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600'
               }`}
             >
               <GraduationCap size={16} />
@@ -118,8 +118,8 @@ export default function Register() {
               onClick={() => setRole('PROFESSOR')}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border-2 transition ${
                 role === 'PROFESSOR'
-                  ? 'border-violet-600 bg-violet-50 text-violet-700'
-                  : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                  ? 'border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-950/60 dark:text-violet-300'
+                  : 'border-slate-200 text-slate-500 hover:border-slate-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600'
               }`}
             >
               <UserRound size={16} />

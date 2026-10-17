@@ -400,7 +400,7 @@ export function Materials() {
                 <span className="text-xs text-slate-400">v{material.version}</span>
               </div>
 
-              <span className="chip mt-3 inline-flex bg-violet-50 text-violet-700">
+              <span className="chip mt-3 inline-flex bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
                 {material.type}
               </span>
 

@@ -165,25 +165,25 @@ export default function Dashboard() {
           label: 'Total de tarefas',
           value: assignments.length,
           icon: ClipboardCheck,
-          bg: 'bg-violet-50 text-violet-600',
+          bg: 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
         },
         {
           label: 'Provas',
           value: provas.length,
           icon: GraduationCap,
-          bg: 'bg-violet-50 text-violet-600',
+          bg: 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
         },
         {
           label: 'Atrasadas',
           value: overdue.length,
           icon: FileWarning,
-          bg: overdue.length ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400',
+          bg: overdue.length ? 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400' : 'bg-slate-50 text-slate-400 dark:bg-slate-800/60 dark:text-slate-500',
         },
         {
           label: 'Concluídas',
           value: completed.length,
           icon: CheckCircle2,
-          bg: 'bg-emerald-50 text-emerald-600',
+          bg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400',
         },
       ]
     : [
@@ -191,25 +191,25 @@ export default function Dashboard() {
           label: 'Total de tarefas',
           value: assignments.length,
           icon: ClipboardCheck,
-          bg: 'bg-violet-50 text-violet-600',
+          bg: 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
         },
         {
           label: 'Provas',
           value: provas.length,
           icon: GraduationCap,
-          bg: 'bg-violet-50 text-violet-600',
+          bg: 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
         },
         {
           label: 'Entregas recebidas',
           value: receivedCount,
           icon: Inbox,
-          bg: 'bg-sky-50 text-sky-600',
+          bg: 'bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400',
         },
         {
           label: 'Pendentes de correção',
           value: pendingGradingCount,
           icon: FileWarning,
-          bg: pendingGradingCount ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400',
+          bg: pendingGradingCount ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400' : 'bg-slate-50 text-slate-400 dark:bg-slate-800/60 dark:text-slate-500',
         },
       ];
 

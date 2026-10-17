@@ -160,7 +160,7 @@ export default function SubjectDetail() {
               <p className="muted mt-1">{materials.length} material(is)</p>
             </div>
 
-            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+            <div className="p-3 bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 rounded-xl">
               <FileText size={20} />
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function SubjectDetail() {
                   <span className="chip">{material.type}</span>
 
                   {material.completed && (
-                    <span className="chip bg-emerald-100 text-emerald-700">Concluído</span>
+                    <span className="chip bg-emerald-100 text-emerald-700 dark:bg-emerald-900/70 dark:text-emerald-300">Concluído</span>
                   )}
                 </div>
 
@@ -224,7 +224,7 @@ export default function SubjectDetail() {
               <p className="muted mt-1">{events.length} evento(s) futuro(s)</p>
             </div>
 
-            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+            <div className="p-3 bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 rounded-xl">
               <CalendarDays size={20} />
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function SubjectDetail() {
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
         <div className="card p-6 flex items-center gap-4">
-          <div className="p-3 bg-violet-50 text-violet-600 rounded-2xl shrink-0">
+          <div className="p-3 bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 rounded-2xl shrink-0">
             <UserRound size={26} />
           </div>
 

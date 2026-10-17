@@ -5,9 +5,9 @@ import { eventColor } from '../lib/colors';
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const typeChip: Record<string, string> = {
-  PROVA: 'bg-red-100 text-red-700',
-  TRABALHO: 'bg-amber-100 text-amber-700',
-  AULA: 'bg-violet-100 text-violet-700',
+  PROVA: 'bg-red-100 text-red-700 dark:bg-red-900/70 dark:text-red-300',
+  TRABALHO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/70 dark:text-amber-300',
+  AULA: 'bg-violet-100 text-violet-700 dark:bg-violet-900/70 dark:text-violet-300',
 };
 
 export function dayKey(date: Date) {
@@ -18,7 +18,7 @@ export function dayKey(date: Date) {
 }
 
 export function eventTypeChip(type: string) {
-  return typeChip[type] || 'bg-slate-100 text-slate-600';
+  return typeChip[type] || 'bg-slate-100 text-slate-600 dark:bg-slate-900/70 dark:text-slate-300';
 }
 
 export default function Calendar({

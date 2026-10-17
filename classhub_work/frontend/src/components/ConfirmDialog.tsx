@@ -48,7 +48,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             <div className="flex items-start gap-3">
               <div
                 className={`p-2 rounded-xl ${
-                  options.danger ? 'bg-red-50 text-red-600' : 'bg-violet-50 text-violet-600'
+                  options.danger ? 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400' : 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400'
                 }`}
               >
                 <AlertTriangle size={20} />
