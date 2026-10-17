@@ -8,6 +8,7 @@ const router = Router();
 router.use(auth);
 
 const AI_MODEL = process.env.AI_MODEL || 'gemini-3.8-flash';
+const TUTOR_NAME = process.env.TUTOR_NAME || 'Lumi';
 
 const ATTACHMENT_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.md', '.docx'];
 const attachmentUpload = multer({
@@ -48,7 +49,7 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
   if (!apiKey)
     return res
       .status(503)
-      .json({ message: 'Tutor IA não configurado. Defina AI_API_KEY no servidor.' });
+      .json({ message: 'A Lumi não está disponível. Defina AI_API_KEY no servidor.' });
 
   let parsed: any = {};
   try {
@@ -95,7 +96,7 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
 
   const who = req.user!;
   const system = [
-    'Você é o Tutor IA do ClassHub, um portal acadêmico.',
+    `Você é a ${TUTOR_NAME}, a assistente de estudos do ClassHub.`,
     `O usuário chama-se ${who.name} e é ${who.role === 'PROFESSOR' ? 'professor' : 'aluno'}.`,
     subjects.length ? `Disciplinas do ambiente: ${subjects.join(', ')}.` : '',
     'Responda sempre em português do Brasil, de forma didática, clara e motivadora.',
@@ -103,6 +104,11 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
     'Se não souber algo, admita e sugira onde procurar. Não invente regras acadêmicas.',
     'O usuário pode anexar arquivos (PDF, imagens, texto). Analise-os quando presentes.',
     'Se o usuário pedir um PDF, estruture a resposta como um documento completo e bem formatado — ele poderá exportá-la em PDF.',
+    'REGRAS DE ESTILO (obrigatórias):',
+    '- NUNCA encerre respostas com despedidas ou ofertas repetidas de ajuda (ex.: "é só me chamar", "se precisar, estou aqui", "posso ajudar com mais alguma coisa").',
+    '- NUNCA liste as disciplinas em fechamentos ou despedidas.',
+    '- Responda exatamente o que foi pedido e encerre a mensagem naturalmente, sem parágrafos finais de cortesia.',
+    `- Assuma a identidade da ${TUTOR_NAME} de forma sutil: nunca se apresente repetidamente, nunca diga que é um "tutor" — você é a ${TUTOR_NAME}.`,
   ]
     .filter(Boolean)
     .join('\n');

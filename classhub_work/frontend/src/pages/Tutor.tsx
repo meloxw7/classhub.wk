@@ -50,7 +50,7 @@ async function streamTutor(
   const res = await fetch(`${apiBaseURL}/tutor/chat`, { method: 'POST', headers, body, signal });
   if (!res.ok) {
     const data = await res.json().catch(() => ({ message: '' }));
-    throw new Error(data.message || 'Não foi possível falar com o tutor.');
+    throw new Error(data.message || 'Não foi possível falar com a Lumi.');
   }
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
@@ -200,7 +200,7 @@ function exportPdf(content: string) {
   printWindow.document.write(`
     <html>
       <head>
-        <title>ClassHub — Tutor IA</title>
+        <title>ClassHub — Lumi</title>
         <style>
           @page { size: A4; margin: 2.2cm; }
           body { font-family: 'Segoe UI', Arial, sans-serif; color: #101014; line-height: 1.65; font-size: 11pt; }
@@ -222,7 +222,7 @@ function exportPdf(content: string) {
       <body>
         <header>
           <div class="logo">C</div>
-          <div class="brand">Class<span>Hub</span> — Tutor IA</div>
+          <div class="brand">Class<span>Hub</span> — Lumi</div>
           <div class="date">${new Date().toLocaleString('pt-BR')}</div>
         </header>
         ${mdToHtml(content)}
@@ -315,7 +315,7 @@ export default function Tutor() {
       );
     } catch (e: any) {
       if (e.name !== 'AbortError') {
-        setError(e.message || 'Erro ao conversar com o tutor.');
+        setError(e.message || 'Erro ao conversar com a Lumi.');
         setMessages((current) => {
           const copy = [...current];
           const last = copy[copy.length - 1];
@@ -354,8 +354,8 @@ export default function Tutor() {
           </span>
         </span>
         <div>
-          <p className="eyebrow">Ferramentas</p>
-          <h2 className="section-title mt-0.5">Tutor IA</h2>
+          <p className="eyebrow">Sua assistente de estudos</p>
+          <h2 className="section-title mt-0.5">Lumi</h2>
           <p className="muted mt-1">
             Tire dúvidas, revise textos e planeje estudos — com contexto das suas disciplinas.
           </p>
@@ -372,9 +372,7 @@ export default function Tutor() {
                   <Sparkles size={28} />
                 </span>
               </span>
-              <h3 className="font-bold text-lg">
-                Olá, {user?.name?.split(' ')[0]}! Sou o seu tutor.
-              </h3>
+              <h3 className="font-bold text-lg">Olá, {user?.name?.split(' ')[0]}! Eu sou a Lumi.</h3>
               <p className="muted mt-1 max-w-md">
                 Pergunte qualquer coisa sobre suas disciplinas — eu explico, crio exercícios e
                 ajudo a revisar. Anexe PDFs e imagens, e exporte minhas respostas em PDF.
@@ -528,7 +526,7 @@ export default function Tutor() {
                 send();
               }
             }}
-            placeholder="Pergunte algo ao tutor..."
+            placeholder="Pergunte algo à Lumi..."
             rows={1}
             className="input resize-none max-h-32 py-2.5"
             style={{ height: 'auto' }}

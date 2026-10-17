@@ -79,7 +79,7 @@ export default function Layout() {
       'Ferramentas',
       [
         ['/busca', 'Busca', SearchIcon],
-        ['/tutor', 'Tutor IA', Sparkles],
+        ['/tutor', 'Lumi', Sparkles],
         ['/abnt', 'Conversor ABNT', BookMarked],
       ],
     ],

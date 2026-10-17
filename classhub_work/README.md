@@ -1,6 +1,6 @@
 # ClassHub
 
-Portal acadêmico integrado: disciplinas, materiais, agenda com calendário, trabalhos, fórum, notificações e tutor IA (Gemini).
+Portal acadêmico integrado: disciplinas, materiais, agenda com calendário, trabalhos, fórum, notificações e Lumi (assistente de estudos IA).
 
 Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 
@@ -115,16 +115,17 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Mensagens com avatar/foto, nome, hora; próprias em destaque (direita, azul); máx. 1000 caracteres
 - Salas por disciplina: trocar o seletor entra/sai da sala; mensagens persistidas na tabela `chat_messages`
 
-### Tutor IA (Gemini)
-- Página "Tutor IA" (`/tutor`) com chat em **streaming** (resposta aparece palavra por palavra)
-- Tutor com **contexto**: conhece o nome, o perfil (aluno/professor) e as disciplinas do ambiente do usuário logado
+### Lumi — assistente de estudos (Gemini)
+- Página "Lumi" (`/tutor`, item no menu Ferramentas) com chat em **streaming** (resposta aparece palavra por palavra)
+- Lumi tem **contexto**: conhece o nome, o perfil (aluno/professor) e as disciplinas do ambiente do usuário logado
 - Respostas didáticas em PT-BR com **markdown** (negrito, listas, blocos de código)
+- **Estilo próprio**: nunca encerra com "é só me chamar" nem repete listas de disciplinas em fechamentos (regras fixas no system prompt)
 - Sugestões rápidas iniciais (explique um tópico, plano de estudos, simule uma prova, revise um texto)
 - Botão **parar geração** durante o streaming e **copiar resposta** ao final
 - **Anexos**: envie até 3 arquivos por mensagem (.pdf, .png, .jpg, .txt, .md — até 10 MB cada; .docx é lido como texto) — PDFs e imagens vão direto ao Gemini (multimodal), textos são anexados ao prompt
-- **Exportar PDF**: qualquer resposta do tutor abre uma janela de impressão formatada (margem A4, cabeçalho ClassHub, listas e código estilizados) — "Salvar como PDF" do navegador gera o documento
+- **Exportar PDF**: qualquer resposta abre uma janela de impressão formatada (margem A4, cabeçalho ClassHub, listas e código estilizados) — "Salvar como PDF" do navegador gera o documento
 - Histórico apenas na sessão (não persiste); sem dependências novas (REST + SSE via `fetch`)
-- Configuração: `AI_API_KEY` (Google Gemini, gere em aistudio.google.com) + `AI_MODEL` (padrão `gemini-3.8-flash`) no `.env` do backend; sem chave, a rota responde 503
+- Configuração: `AI_API_KEY` (Google Gemini, gere em aistudio.google.com) + `AI_MODEL` (padrão `gemini-3.8-flash`) + `TUTOR_NAME` (padrão `Lumi`) no `.env` do backend; sem chave, a rota responde 503
 - A chave **nunca** vai ao frontend — o backend faz o proxy server-side
 
 ### Conversor ABNT (NBR 14724 / NBR 6023)
@@ -227,7 +228,7 @@ Criadas pelo `seed.sql` para testes locais — em produção, use o cadastro sel
 | Estatísticas  | `GET /api/stats` |
 | Busca         | `GET /api/search?q=` (materiais, eventos, fórum, avisos — respeita visibilidade) |
 | CSV           | `GET /api/grades/export` (boletim da turma, professor) |
-| Tutor IA      | `POST /api/tutor/chat` (streaming SSE; requer `AI_API_KEY`) |
+| Lumi (IA)     | `POST /api/tutor/chat` (streaming SSE; requer `AI_API_KEY`) |
 | Health        | `GET /api/health` |
 | Docs          | `GET /api/docs` (Swagger UI), `GET /api/docs/openapi.json` (spec OpenAPI 3.0) |
 

@@ -31,7 +31,7 @@ const spec = {
     { name: 'Progresso' },
     { name: 'Estatísticas' },
     { name: 'ABNT' },
-    { name: 'Tutor IA' },
+    { name: 'Lumi (IA)' },
     { name: 'Chat' },
     { name: 'Boletim' },
     { name: 'Infra' },
@@ -259,8 +259,8 @@ const spec = {
     },
     '/api/tutor/chat': {
       post: {
-        tags: ['Tutor IA'],
-        summary: 'Conversa com o tutor (Gemini) — resposta em streaming SSE',
+        tags: ['Lumi (IA)'],
+        summary: 'Conversa com a Lumi, assistente de estudos (Gemini) — resposta em streaming SSE',
         requestBody: {
           required: true,
           content: {
