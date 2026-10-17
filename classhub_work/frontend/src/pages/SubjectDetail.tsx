@@ -111,7 +111,7 @@ export default function SubjectDetail() {
       <div className="mb-7">
         <Link
           to="/disciplinas"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 mb-5"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-700 mb-5"
         >
           <ArrowLeft size={16} />
           Voltar para disciplinas
@@ -125,7 +125,7 @@ export default function SubjectDetail() {
           </span>
 
           <div>
-            <p className="text-blue-600 font-semibold text-sm">{subject.code || 'Disciplina'}</p>
+            <p className="text-violet-600 font-semibold text-sm">{subject.code || 'Disciplina'}</p>
 
             <h2 className="section-title">{subject.name}</h2>
 
@@ -160,7 +160,7 @@ export default function SubjectDetail() {
               <p className="muted mt-1">{materials.length} material(is)</p>
             </div>
 
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
               <FileText size={20} />
             </div>
           </div>
@@ -185,7 +185,7 @@ export default function SubjectDetail() {
 
                 {material.url && (
                   <a
-                    className="text-blue-600 text-sm font-semibold inline-block mt-2"
+                    className="text-violet-600 text-sm font-semibold inline-block mt-2"
                     href={material.url}
                     target="_blank"
                     rel="noreferrer"
@@ -196,7 +196,7 @@ export default function SubjectDetail() {
 
                 {material.file_path && (
                   <a
-                    className="text-blue-600 text-sm font-semibold inline-block mt-2"
+                    className="text-violet-600 text-sm font-semibold inline-block mt-2"
                     href={fileUrl(material.file_path)}
                     target="_blank"
                     rel="noreferrer"
@@ -224,7 +224,7 @@ export default function SubjectDetail() {
               <p className="muted mt-1">{events.length} evento(s) futuro(s)</p>
             </div>
 
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
               <CalendarDays size={20} />
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function SubjectDetail() {
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
         <div className="card p-6 flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shrink-0">
+          <div className="p-3 bg-violet-50 text-violet-600 rounded-2xl shrink-0">
             <UserRound size={26} />
           </div>
 
@@ -309,7 +309,7 @@ export default function SubjectDetail() {
 
           <Link
             to="/trabalhos"
-            className="text-blue-600 text-sm font-semibold inline-flex items-center gap-1 mt-4 hover:text-blue-700"
+            className="text-violet-600 text-sm font-semibold inline-flex items-center gap-1 mt-4 hover:text-violet-700"
           >
             <ClipboardCheck size={15} />
             Ver trabalhos da disciplina

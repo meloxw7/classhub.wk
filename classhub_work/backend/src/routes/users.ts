@@ -26,9 +26,10 @@ router.get('/students', role('PROFESSOR'), async (_req, res) => {
   res.json(r.rows);
 });
 router.get('/me', async (req: AuthRequest, res) => {
-  const r = await pool.query('SELECT id,name,email,role,avatar_path FROM users WHERE id=$1', [
-    req.user!.id,
-  ]);
+  const r = await pool.query(
+    'SELECT id,name,email,role,avatar_path,course,semester,ra,institution FROM users WHERE id=$1',
+    [req.user!.id]
+  );
   if (!r.rowCount) return res.status(404).json({ message: 'Usuário não encontrado' });
   res.json(r.rows[0]);
 });

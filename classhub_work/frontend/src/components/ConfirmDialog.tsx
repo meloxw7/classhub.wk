@@ -43,12 +43,12 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
 
       {options && (
-        <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/50 p-4">
-          <div className="toast-in card p-6 w-full max-w-sm">
+        <div className="backdrop-in fixed inset-0 z-[110] grid place-items-center bg-slate-950/50 p-4">
+          <div className="pop-in origin-in-center card p-6 w-full max-w-sm">
             <div className="flex items-start gap-3">
               <div
                 className={`p-2 rounded-xl ${
-                  options.danger ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                  options.danger ? 'bg-red-50 text-red-600' : 'bg-violet-50 text-violet-600'
                 }`}
               >
                 <AlertTriangle size={20} />

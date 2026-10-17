@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse bg-slate-200 rounded-xl ${className}`} />;
+  return <div className={`animate-pulse shimmer bg-slate-100 rounded-xl ${className}`} />;
 }
 
 export function SkeletonCard() {
@@ -27,11 +27,14 @@ export function EmptyState({
   children?: ReactNode;
 }) {
   return (
-    <div className="card p-10 col-span-full flex flex-col items-center text-center">
-      <div className="p-4 bg-slate-100 text-slate-400 rounded-full">
-        <Icon size={28} />
+    <div className="card p-10 col-span-full flex flex-col items-center text-center group">
+      <div className="relative">
+        <div className="float-soft absolute -inset-3 bg-gradient-to-br from-violet-100/70 to-fuchsia-100/50 dark:from-violet-900/40 dark:to-fuchsia-900/30 rounded-full blur-lg" />
+        <div className="relative p-4 bg-violet-50 text-violet-500 dark:bg-violet-950 dark:text-violet-400 rounded-full transition-transform duration-300 group-hover:scale-110">
+          <Icon size={28} />
+        </div>
       </div>
-      <h3 className="font-bold mt-4">{title}</h3>
+      <h3 className="font-bold mt-5">{title}</h3>
       {text && <p className="muted mt-1">{text}</p>}
       {children && <div className="mt-4">{children}</div>}
     </div>

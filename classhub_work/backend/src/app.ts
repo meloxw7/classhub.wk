@@ -11,7 +11,6 @@ import notes from './routes/notes';
 import events from './routes/events';
 import notices from './routes/notices';
 import assignments from './routes/assignments';
-import attendance from './routes/attendance';
 import forum from './routes/forum';
 import rooms from './routes/rooms';
 import notifications from './routes/notifications';
@@ -31,7 +30,22 @@ app.disable('x-powered-by');
 app.use(
   helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } })
 );
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = [
+  clientUrl,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+].filter((v, i, a) => v && a.indexOf(v) === i);
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Origem não permitida pelo CORS'));
+    },
+  })
+);
 app.use('/api/abnt', express.json({ limit: '80mb' }));
 app.use(express.json({ limit: '2mb' }));
 app.use('/uploads', express.static(uploadDir));
@@ -76,7 +90,6 @@ app.use('/api/notes', notes);
 app.use('/api/events', events);
 app.use('/api/notices', notices);
 app.use('/api/assignments', assignments);
-app.use('/api/attendance', attendance);
 app.use('/api/forum', forum);
 app.use('/api/rooms', rooms);
 app.use('/api/notifications', notifications);

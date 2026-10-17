@@ -1,13 +1,15 @@
 # ClassHub
 
-Portal acadêmico integrado: disciplinas, materiais, agenda com calendário, trabalhos, fórum, presença por PIN e notificações.
+Portal acadêmico integrado: disciplinas, materiais, agenda com calendário, trabalhos, fórum e notificações.
 
 Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 
 ## Funcionalidades
 
 ### Autenticação e segurança
-- Login com e-mail/senha (JWT, expira em 8h; senha com hash bcrypt)
+- Login com e-mail/senha (JWT, expira em 2h; senha com hash bcrypt)
+- **Cadastro self-service** (`/cadastro`): alunos informam curso, semestre/período e matrícula (RA); professores informam **código da instituição** — a instituição é identificada automaticamente pelo código e exibida no perfil do professor. Códigos válidos: `NASSAU14` (Uninassau Boa Viagem), `CZC14` (Colégio Zuleide Constantino), `CSL` (Colégio Souza Leão), `UNB14` (Unibra Faculdade). Outros códigos via `INSTITUTION_CODES=CODE:Nome;...` — e a **disciplina que lecionam** (criada automaticamente)
+- **Lembrar de mim** no login: sessão de 30 dias (marcado) ou 1 dia (desmarcado), via validade do refresh token
 - Dois perfis com permissões distintas: **ALUNO** e **PROFESSOR** (middleware de role no backend)
 - WebSocket do chat autenticado com o mesmo JWT (recusa conexão sem token válido)
 - Botões de acesso rápido na tela de login (preenchem contas demo)
@@ -70,13 +72,6 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Contadores por trabalho: total de entregas e pendentes de correção
 - Exclusão de trabalho (professor) com diálogo de confirmação (remove entregas e o evento vinculado)
 
-### Presença (chamada por PIN)
-- Professor abre chamada: disciplina + duração (1–120 min, padrão 10) → gera **PIN de 6 dígitos** com expiração
-- Professor vê PIN ativo em destaque, histórico das últimas 20 chamadas com contagem de presentes e pode encerrar antecipadamente
-- Aluno registra presença digitando o PIN (só dígitos, 6 posições); PIN inválido/expirado ou presença duplicada retornam erro
-- Histórico de presenças do aluno (disciplina + data/hora)
-- **Exportar CSV** (professor): todas as chamadas com contagem e nomes dos presentes
-
 ### Fórum de dúvidas
 - Pergunta vinculada a um material (aluno ou professor)
 - Respostas em linha; respostas de professor ganham selo **"Resposta oficial"**
@@ -137,14 +132,14 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Lista "Minhas referências" com exclusão; opção de incluir todas (ordem alfabética) na seção REFERÊNCIAS do documento exportado
 - Upload até 50 MB; payload de exportação da rota `/api/abnt` aceita até 80 MB (imagens em base64)
 
-- Atalhos rápidos: publicar material, gerenciar trabalhos, abrir chamada
+- Atalhos rápidos: publicar material, gerenciar trabalhos
 - Formulário de publicação de aviso (com opção de fixar)
 
 ### Boletim (desempenho)
 - Página "Boletim" (`/boletim`) com visões distintas:
-  - **Aluno**: média geral (0–10), presença, progresso de materiais, pendentes/atrasados e lista de trabalhos com status (`PENDING`/`SUBMITTED`/`GRADED`/`LATE`)
-  - **Professor**: matriz alunos × disciplinas com média, entregas, corrigidas e presença
-- **Exportar CSV** (professor): boletim completo da turma (aluno, disciplina, entregas, corrigidas, média e presença)
+  - **Aluno**: média geral (0–10), progresso de materiais, pendentes/atrasados e lista de trabalhos com status (`PENDING`/`SUBMITTED`/`GRADED`/`LATE`)
+  - **Professor**: matriz alunos × disciplinas com média e entregas
+- **Exportar CSV** (professor): boletim completo da turma (aluno, disciplina, entregas, corrigidas e média)
 
 ### UX / PWA
 - **Modo escuro**: botão no topo (sol/lua), persiste por usuário no `localStorage`, aplicado antes do React montar (sem flash); utilitárias (.card, .input, botões) adaptadas
@@ -200,7 +195,7 @@ cd frontend  && npm run dev     # App em http://localhost:5173
 
 | Área          | Endpoints |
 |---------------|-----------|
-| Auth          | `POST /api/auth/login` |
+| Auth          | `POST /api/auth/login` (aceita `rememberMe`), `POST /api/auth/register` |
 | Disciplinas   | `GET/POST /api/subjects` |
 | Materiais     | `GET/POST /api/materials`, `PATCH /api/materials/:id/progress`, `POST /api/materials/:id/version`, `GET /api/materials/:id/versions`, `DELETE /api/materials/:id` |
 | Notas         | `GET/PUT /api/notes/:subjectId` |
@@ -211,14 +206,13 @@ cd frontend  && npm run dev     # App em http://localhost:5173
 | ABNT          | `POST /api/abnt/convert` (upload .docx/.pdf/.txt → texto extraído), `GET/POST /api/abnt/references`, `DELETE /api/abnt/references/:id`, `POST /api/abnt/export` (download .docx ABNT) |
 | Avisos        | `GET/POST /api/notices` |
 | Trabalhos     | `GET/POST /api/assignments`, `DELETE /api/assignments/:id`, `GET /api/assignments/:id/submissions`, `PATCH /api/assignments/submissions/:id`, `POST /api/assignments/:id/submit` |
-| Presença      | `GET/POST /api/attendance/sessions|open`, `PATCH /api/attendance/sessions/:id/close`, `POST /api/attendance/mark`, `GET /api/attendance/mine` |
 | Fórum         | `GET/POST /api/forum`, `POST /api/forum/:id/replies` |
 | Salas         | `GET/POST /api/rooms`, `GET/POST /api/rooms/:id/posts` |
 | Notificações  | `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `PATCH /api/notifications/read-all`, `DELETE /api/notifications`, `DELETE /api/notifications/:id`, `POST /api/notifications/subscribe` |
 | Progresso     | `GET /api/progress` |
 | Estatísticas  | `GET /api/stats` |
 | Busca         | `GET /api/search?q=` (materiais, eventos, fórum, avisos — respeita visibilidade) |
-| CSV           | `GET /api/attendance/export` (professor), `GET /api/grades/export` (boletim da turma, professor) |
+| CSV           | `GET /api/grades/export` (boletim da turma, professor) |
 | Health        | `GET /api/health` |
 | Docs          | `GET /api/docs` (Swagger UI), `GET /api/docs/openapi.json` (spec OpenAPI 3.0) |
 
@@ -227,12 +221,12 @@ cd frontend  && npm run dev     # App em http://localhost:5173
 Backend e frontend usam **Vitest**. Os testes do backend são de dois tipos:
 
 - **Unitários** (sem banco): helpers de token, `getJwtSecret` e middleware de autenticação/role.
-- **Integração** (precisam de PostgreSQL): health check, login/refresh/logout/reset com as contas demo, guard de autenticação (401), guard de role (403), rate limit do `/api/auth`, Swagger e **fluxos completos de negócio** — agenda com visibilidade, materiais com versões e progresso, avisos fixados, fórum com resposta oficial, salas de estudo, trabalhos com entrega/correção/boletim, presença por PIN (abrir, marcar, duplicado, encerrar), notificações, estatísticas e conversor ABNT (convert + export .docx + referências). Sem `DATABASE_URL` configurada, os testes de banco são pulados automaticamente (`describe.skipIf`).
+- **Integração** (precisam de PostgreSQL): health check, login/refresh/logout/reset com as contas demo, guard de autenticação (401), guard de role (403), rate limit do `/api/auth`, Swagger e **fluxos completos de negócio** — agenda com visibilidade, materiais com versões e progresso, avisos fixados, fórum com resposta oficial, salas de estudo, trabalhos com entrega/correção/boletim, notificações, estatísticas e conversor ABNT (convert + export .docx + referências). Sem `DATABASE_URL` configurada, os testes de banco são pulados automaticamente (`describe.skipIf`).
 
 Cada teste de integração cria os próprios dados em uma disciplina sandbox e limpa tudo ao final (delete em cascata + revogação dos refresh tokens criados); os testes de senha/avatar **restauram o estado original** das contas demo.
 
 ```bash
-cd backend   && npm test              # 68 testes (unit + integração)
+cd backend   && npm test              # 72 testes (unit + integração)
 cd frontend  && npm test              # 24 testes (colors, api/interceptor, Toast, ConfirmDialog)
 ```
 

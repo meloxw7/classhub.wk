@@ -1,15 +1,28 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { api } from './api';
 import { User } from '../types';
+type RegisterData = {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  course?: string;
+  semester?: string;
+  ra?: string;
+  institutionCode?: string;
+  subjectName?: string;
+};
 type C = {
   user: User | null;
-  login: (e: string, p: string) => Promise<void>;
+  login: (e: string, p: string, rememberMe?: boolean) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (patch: Partial<User>) => void;
 };
 const AuthContext = createContext<C>({
   user: null,
   login: async () => {},
+  register: async () => {},
   logout: () => {},
   updateUser: () => {},
 });
@@ -21,8 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
   });
-  async function login(email: string, password: string) {
-    const r = await api.post('/auth/login', { email, password });
+  async function login(email: string, password: string, rememberMe = false) {
+    const r = await api.post('/auth/login', { email, password, rememberMe });
+    localStorage.setItem('classhub_token', r.data.token);
+    localStorage.setItem('classhub_refresh', r.data.refreshToken);
+    localStorage.setItem('classhub_user', JSON.stringify(r.data.user));
+    setUser(r.data.user);
+  }
+  async function register(data: RegisterData) {
+    const r = await api.post('/auth/register', data);
     localStorage.setItem('classhub_token', r.data.token);
     localStorage.setItem('classhub_refresh', r.data.refreshToken);
     localStorage.setItem('classhub_user', JSON.stringify(r.data.user));
@@ -49,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

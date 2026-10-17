@@ -1,24 +1,15 @@
 import { useEffect, useState } from 'react';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ClipboardList,
-  Download,
-  GraduationCap,
-  PieChart,
-  UsersRound,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ClipboardList, Download, GraduationCap, PieChart, UsersRound } from 'lucide-react';
 import { api, downloadCsv } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../components/Toast';
 import { EmptyState, Skeleton, SkeletonCard } from '../components/Feedback';
-import { initials, progressTone, subjectColor } from '../lib/colors';
+import { initials, subjectColor } from '../lib/colors';
 
 type StudentData = {
   role: 'ALUNO';
   overall: {
     avg: number | null;
-    attendancePct: number | null;
     progressPct: number | null;
     pending: number;
     late: number;
@@ -28,7 +19,6 @@ type StudentData = {
     name: string;
     code: string | null;
     avg: number | null;
-    attendance: { attended: number; total: number; pct: number | null };
     progress: { done: number; total: number; pct: number | null };
     assignments: {
       id: string;
@@ -48,7 +38,6 @@ type ProfessorData = {
     name: string;
     code: string | null;
     assignments: number;
-    sessions: number;
     pendingGrading: number;
   }[];
   students: {
@@ -56,7 +45,6 @@ type ProfessorData = {
     name: string;
     email: string;
     grades: Record<string, { submitted: number; graded: number; avg: number | null }>;
-    attendance: Record<string, { attended: number; total: number; pct: number | null }>;
   }[];
 };
 
@@ -65,7 +53,7 @@ function statusChip(status: string) {
     case 'GRADED':
       return { label: 'Corrigido', cls: 'bg-emerald-100 text-emerald-700' };
     case 'SUBMITTED':
-      return { label: 'Enviado', cls: 'bg-blue-100 text-blue-700' };
+      return { label: 'Enviado', cls: 'bg-violet-100 text-violet-700' };
     case 'LATE':
       return { label: 'Atrasado', cls: 'bg-red-100 text-red-700' };
     default:
@@ -73,14 +61,53 @@ function statusChip(status: string) {
   }
 }
 
-function Bar({ pct, tone }: { pct: number | null; tone?: string }) {
-  if (pct === null) return <div className="text-xs text-slate-400">Sem registros</div>;
+function ProgressRing({ pct, label }: { pct: number | null; label: string }) {
+  const size = 92;
+  const stroke = 8;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const value = pct === null ? 0 : Math.min(pct, 100);
+  const offset = circumference - (value / 100) * circumference;
+  const tone = pct === null ? '#cbd5e1' : pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
   return (
-    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-      <div
-        className={`h-full rounded-full ${tone || progressTone(pct)}`}
-        style={{ width: `${Math.min(pct, 100)}%` }}
-      />
+    <div className="flex items-center gap-4">
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth={stroke}
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={tone}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className="transition-all duration-700"
+          />
+        </svg>
+        <div className="absolute inset-0 grid place-items-center">
+          {pct === null ? (
+            <span className="text-slate-300 text-xl font-bold">—</span>
+          ) : (
+            <span className="text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+              {pct}%
+            </span>
+          )}
+        </div>
+      </div>
+      <div>
+        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{label}</p>
+        <p className="text-xs text-slate-400 mt-0.5">materiais concluídos</p>
+      </div>
     </div>
   );
 }
@@ -112,11 +139,10 @@ export default function Boletim() {
     return (
       <div>
         <div className="mb-7">
-          <p className="text-blue-600 font-semibold">Desempenho</p>
+          <p className="text-violet-600 font-semibold">Desempenho</p>
           <h2 className="section-title mt-1">Boletim</h2>
         </div>
-        <div className="grid md:grid-cols-4 gap-4">
-          <SkeletonCard />
+        <div className="grid md:grid-cols-3 gap-4">
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -137,13 +163,7 @@ export default function Boletim() {
         label: 'Média geral',
         value: student.overall.avg !== null ? student.overall.avg.toFixed(1) : '—',
         icon: GraduationCap,
-        bg: 'bg-blue-50 text-blue-600',
-      },
-      {
-        label: 'Presença',
-        value: student.overall.attendancePct !== null ? `${student.overall.attendancePct}%` : '—',
-        icon: UsersRound,
-        bg: 'bg-emerald-50 text-emerald-600',
+        bg: 'bg-violet-50 text-violet-600',
       },
       {
         label: 'Materiais concluídos',
@@ -162,20 +182,20 @@ export default function Boletim() {
     return (
       <div>
         <div className="mb-7">
-          <p className="text-blue-600 font-semibold">Desempenho</p>
+          <p className="text-violet-600 font-semibold">Desempenho</p>
           <h2 className="section-title mt-1">Boletim</h2>
           <p className="muted mt-2">
             Olá, {user?.name}. Aqui está o resumo do seu desempenho por disciplina.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {cards.map((c) => (
             <div key={c.label} className="card p-5 flex items-center gap-4">
               <div className={`p-3 rounded-xl ${c.bg}`}>
                 <c.icon size={22} />
               </div>
               <div>
-                <div className="text-2xl font-black">{c.value}</div>
+                <div className="text-2xl font-black tabular-nums">{c.value}</div>
                 <div className="text-xs font-semibold text-slate-500">{c.label}</div>
               </div>
             </div>
@@ -187,7 +207,7 @@ export default function Boletim() {
             <EmptyState
               icon={ClipboardList}
               title="Nada por aqui ainda"
-              text="Quando houver disciplinas, trabalhos e presenças, seu boletim aparece aqui."
+              text="Quando houver disciplinas e trabalhos, seu boletim aparece aqui."
             />
           </div>
         )}
@@ -226,26 +246,7 @@ export default function Boletim() {
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-500 mb-1">
-                    <span>Presença</span>
-                    <span>{s.attendance.pct !== null ? `${s.attendance.pct}%` : '—'}</span>
-                  </div>
-                  <Bar pct={s.attendance.pct} />
-                  <div className="text-xs text-slate-400 mt-1">
-                    {s.attendance.attended} de {s.attendance.total} chamadas
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-500 mb-1">
-                    <span>Materiais concluídos</span>
-                    <span>{s.progress.pct !== null ? `${s.progress.pct}%` : '—'}</span>
-                  </div>
-                  <Bar pct={s.progress.pct} />
-                  <div className="text-xs text-slate-400 mt-1">
-                    {s.progress.done} de {s.progress.total} materiais
-                  </div>
-                </div>
+                <ProgressRing pct={s.progress.pct} label={`${s.progress.done} de ${s.progress.total}`} />
               </div>
 
               {s.assignments.length > 0 && (
@@ -296,10 +297,10 @@ export default function Boletim() {
     <div>
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
-          <p className="text-blue-600 font-semibold">Desempenho</p>
+          <p className="text-violet-600 font-semibold">Desempenho</p>
           <h2 className="section-title mt-1">Boletim da turma</h2>
           <p className="muted mt-2">
-            Médias (0–10) e presença de cada aluno por disciplina. Células vazias indicam sem registro.
+            Médias (0–10) de cada aluno por disciplina. Células vazias indicam sem registro.
           </p>
         </div>
         <button
@@ -322,14 +323,14 @@ export default function Boletim() {
         <EmptyState
           icon={UsersRound}
           title="Sem dados para o boletim"
-          text="Cadastre alunos, disciplinas e registre entregas/presenças para preencher a matriz."
+          text="Cadastre alunos, disciplinas e registre entregas para preencher a matriz."
         />
       ) : (
         <div className="card p-0 overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
-            <thead>
-              <tr className="text-left text-xs font-semibold text-slate-500 bg-slate-50">
-                <th className="p-4 sticky left-0 bg-slate-50">Aluno</th>
+            <thead className="sticky top-0 z-10">
+              <tr className="text-left text-xs font-semibold text-slate-500 bg-slate-50 dark:bg-[#1b1b24]">
+                <th className="p-4 sticky left-0 bg-slate-50 dark:bg-[#1b1b24]">Aluno</th>
                 {prof.subjects.map((s) => (
                   <th key={s.id} className="p-4 whitespace-nowrap">
                     {s.name}
@@ -341,19 +342,23 @@ export default function Boletim() {
               </tr>
             </thead>
             <tbody>
-              {prof.students.map((st) => (
-                <tr key={st.id} className="border-t border-slate-100">
-                  <td className="p-4 font-medium sticky left-0 bg-white">
+              {prof.students.map((st, i) => (
+                <tr
+                  key={st.id}
+                  className={`border-t border-slate-100 dark:border-slate-800 ${
+                    i % 2 === 1 ? 'bg-slate-50/60 dark:bg-slate-900/40' : ''
+                  } hover:bg-violet-50/40 dark:hover:bg-violet-950/20 transition`}
+                >
+                  <td className="p-4 font-medium sticky left-0 bg-white dark:bg-[#14141a]">
                     {st.name}
                     <div className="text-xs text-slate-400">{st.email}</div>
                   </td>
                   {prof.subjects.map((s) => {
                     const g = st.grades[s.id] || { submitted: 0, graded: 0, avg: null };
-                    const a = st.attendance[s.id] || { attended: 0, total: 0, pct: null };
                     return (
                       <td key={s.id} className="p-4">
                         <div
-                          className={`font-bold ${
+                          className={`font-bold tabular-nums ${
                             g.avg === null
                               ? 'text-slate-300'
                               : g.avg >= 7
@@ -365,11 +370,8 @@ export default function Boletim() {
                         >
                           {g.avg !== null ? g.avg.toFixed(1) : '—'}
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-slate-400 tabular-nums">
                           {g.submitted}/{s.assignments} entregas
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {a.pct !== null ? `${a.pct}% presença` : `${a.attended}/${a.total}`}
                         </div>
                       </td>
                     );

@@ -7,7 +7,7 @@ const spec = {
     title: 'ClassHub API',
     version: '1.0.0',
     description:
-      'Portal acadêmico integrado: disciplinas, materiais, agenda, trabalhos, fórum, presença por PIN, chat, notificações e conversor ABNT.',
+      'Portal acadêmico integrado: disciplinas, materiais, agenda, trabalhos, fórum, chat, notificações e conversor ABNT.',
   },
   servers: [{ url: '/', description: 'Servidor atual' }],
   components: {
@@ -25,7 +25,6 @@ const spec = {
     { name: 'Usuários' },
     { name: 'Avisos' },
     { name: 'Trabalhos' },
-    { name: 'Presença' },
     { name: 'Fórum' },
     { name: 'Salas' },
     { name: 'Notificações' },
@@ -52,7 +51,41 @@ const spec = {
               schema: {
                 type: 'object',
                 required: ['email', 'password'],
-                properties: { email: { type: 'string' }, password: { type: 'string' } },
+                properties: {
+                  email: { type: 'string' },
+                  password: { type: 'string' },
+                  rememberMe: { type: 'boolean', description: 'Sessão de 30 dias (padrão: 1 dia)' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/auth/register': {
+      post: {
+        tags: ['Auth'],
+        summary:
+          'Cadastro (aluno livre; professor exige código da instituição, que identifica a instituição automaticamente, e disciplina que leciona) → sessão automática',
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'email', 'password', 'role'],
+                properties: {
+                  name: { type: 'string' },
+                  email: { type: 'string' },
+                  password: { type: 'string' },
+                  role: { type: 'string', enum: ['ALUNO', 'PROFESSOR'] },
+                  course: { type: 'string' },
+                  semester: { type: 'string' },
+                  ra: { type: 'string' },
+                  institutionCode: { type: 'string' },
+                  subjectName: { type: 'string' },
+                },
               },
             },
           },
@@ -156,22 +189,6 @@ const spec = {
     },
     '/api/assignments/submissions/{id}': {
       patch: { tags: ['Trabalhos'], summary: 'Corrige entrega com nota + feedback (professor)' },
-    },
-    '/api/attendance/sessions': {
-      get: { tags: ['Presença'], summary: 'Histórico de chamadas (professor)' },
-    },
-    '/api/attendance/open': {
-      get: { tags: ['Presença'], summary: 'PIN ativo (professor)' },
-      post: { tags: ['Presença'], summary: 'Abre chamada com PIN de 6 dígitos (professor)' },
-    },
-    '/api/attendance/sessions/{id}/close': {
-      patch: { tags: ['Presença'], summary: 'Encerra chamada antecipadamente (professor)' },
-    },
-    '/api/attendance/mark': {
-      post: { tags: ['Presença'], summary: 'Registra presença com o PIN (aluno)' },
-    },
-    '/api/attendance/mine': {
-      get: { tags: ['Presença'], summary: 'Presenças do aluno' },
     },
     '/api/forum': {
       get: { tags: ['Fórum'], summary: 'Lista perguntas' },

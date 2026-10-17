@@ -7,6 +7,7 @@ export default function Login() {
   const { user, login } = useAuth();
   const [email, setEmail] = useState('aluno@classhub.local'),
     [password, setPassword] = useState('123456'),
+    [remember, setRemember] = useState(true),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(false);
 
@@ -17,7 +18,7 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await login(email, password);
+      await login(email, password, remember);
     } catch (e: any) {
       setError(e.response?.data?.message || 'Não foi possível entrar.');
     } finally {
@@ -32,12 +33,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-slate-950">
-      <div className="hidden lg:flex flex-col justify-center p-16 relative overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
+      <div className="hidden lg:flex flex-col justify-center p-16 relative overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-900 text-white">
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-24 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl" />
         <div className="relative">
           <div className="text-4xl font-black">
-            Class<span className="text-blue-400">Hub</span>
+            Class<span className="text-violet-400">Hub</span>
           </div>
           <p className="text-slate-300 text-xl mt-5 max-w-lg">
             Portal acadêmico integrado para materiais, notas, prazos, trabalhos e colaboração.
@@ -59,7 +60,7 @@ export default function Login() {
         <form onSubmit={submit} className="card w-full max-w-md p-7">
           <div className="mb-7">
             <div className="lg:hidden text-3xl font-black mb-5">
-              Class<span className="text-blue-600">Hub</span>
+              Class<span className="text-violet-600">Hub</span>
             </div>
             <h1 className="text-2xl font-black">Entrar</h1>
             <p className="muted mt-1">Acesse seu ambiente acadêmico.</p>
@@ -69,7 +70,7 @@ export default function Login() {
           )}
           <label className="label">E-mail</label>
           <div className="relative mb-4">
-            <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
             <input
               className="input pl-10"
               type="email"
@@ -79,7 +80,7 @@ export default function Login() {
           </div>
           <label className="label">Senha</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
             <input
               className="input pl-10"
               type="password"
@@ -87,13 +88,28 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          <label className="flex items-center gap-2 mt-3 select-none cursor-pointer">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="w-4 h-4 accent-violet-600"
+            />
+            <span className="text-sm text-slate-600">Lembrar de mim (30 dias)</span>
+          </label>
           <button disabled={loading} className="btn-primary w-full mt-5">
             {loading ? <Loader2 size={18} className="animate-spin" /> : null}
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
           <p className="text-right mt-3">
-            <Link to="/resetar-senha" className="text-sm text-blue-600 font-semibold">
+            <Link to="/resetar-senha" className="text-sm text-violet-600 font-semibold">
               Esqueci minha senha
+            </Link>
+          </p>
+          <p className="text-center mt-4 text-sm text-slate-600">
+            Não tem conta?{' '}
+            <Link to="/cadastro" className="text-violet-600 font-semibold">
+              Criar conta
             </Link>
           </p>
           <div className="mt-5">

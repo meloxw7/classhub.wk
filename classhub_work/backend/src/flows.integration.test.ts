@@ -20,8 +20,6 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
   let assignmentId = '';
   let submissionId = '';
   let refId = '';
-  let pin = '';
-  let sessionId = '';
   const createdHashes: string[] = [];
   const uploadedFiles: string[] = [];
 
@@ -295,34 +293,6 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
     expect(profView.body.students.length).toBeGreaterThan(0);
   });
 
-  it('presença: professor abre chamada com PIN; aluno marca presença', async () => {
-    const open = await prof().post('/api/attendance/open').send({ subjectId, minutes: 10 });
-    expect(open.status).toBe(201);
-    expect(open.body.pin).toMatch(/^\d{6}$/);
-    pin = open.body.pin;
-    sessionId = open.body.id;
-    const invalid = await alu().post('/api/attendance/mark').send({ pin: '000000' });
-    expect(invalid.status).toBe(400);
-    const mark = await alu().post('/api/attendance/mark').send({ pin });
-    expect(mark.status).toBe(200);
-    const dup = await alu().post('/api/attendance/mark').send({ pin });
-    expect(dup.status).toBe(409);
-    const mine = await alu().get('/api/attendance/mine');
-    expect(mine.body.some((r: any) => r.session_id === sessionId)).toBe(true);
-  });
-
-  it('presença: professor encerra chamada e nova marcação falha', async () => {
-    const close = await prof().patch(`/api/attendance/sessions/${sessionId}/close`);
-    expect(close.status).toBe(200);
-    const late = await alu().post('/api/attendance/mark').send({ pin });
-    expect(late.status).toBe(400);
-    const sessions = await prof().get('/api/attendance/sessions');
-    const found = sessions.body.find((s: any) => s.id === sessionId);
-    expect(found.present_count).toBe(1);
-    const denied = await prof().get('/api/attendance/mine');
-    expect(denied.status).toBe(403);
-  });
-
   it('notificações: fluxo gerou notificações; leitura e exclusão funcionam', async () => {
     const list = await alu().get('/api/notifications');
     const fresh = list.body.filter((n: any) => new Date(n.created_at) >= startedAt);
@@ -388,16 +358,9 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
     expect(short.body).toEqual({ materials: [], events: [], forum: [], notices: [] });
   });
 
-  it('CSV: exporta presenças e boletim (professor); aluno é bloqueado', async () => {
-    const denied1 = await alu().get('/api/attendance/export');
-    expect(denied1.status).toBe(403);
-    const denied2 = await alu().get('/api/grades/export');
-    expect(denied2.status).toBe(403);
-    const presencas = await prof().get('/api/attendance/export');
-    expect(presencas.status).toBe(200);
-    expect(presencas.headers['content-type']).toContain('text/csv');
-    expect(presencas.text).toContain('Disciplina;Abertura;Encerramento;Presentes');
-    expect(presencas.text).toContain('[QA] Disciplina de Testes');
+  it('CSV: exporta boletim (professor); aluno é bloqueado', async () => {
+    const denied = await alu().get('/api/grades/export');
+    expect(denied.status).toBe(403);
     const boletim = await prof().get('/api/grades/export');
     expect(boletim.status).toBe(200);
     expect(boletim.text).toContain('Aluno;Email;Disciplina;Entregas;Corrigidas');

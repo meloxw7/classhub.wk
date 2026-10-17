@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.mjs\" eslint.config.js tsconfig.json package.json"
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.mjs\" eslint.config.mjs tsconfig.json package.json"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

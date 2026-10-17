@@ -5,16 +5,12 @@ import { auth, role, AuthRequest } from '../middleware/auth';
 const router = Router();
 router.use(auth);
 
-function pct(part: number, total: number): number | null {
-  return total ? Math.round((part / total) * 100) : null;
-}
-
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
 router.get('/export', role('PROFESSOR'), async (_req, res) => {
-  const [students, subjects, subs, atts, sessions] = await Promise.all([
+  const [students, subjects, subs] = await Promise.all([
     pool.query("SELECT id, name, email FROM users WHERE role='ALUNO' ORDER BY name"),
     pool.query('SELECT id, name, code FROM subjects ORDER BY name'),
     pool.query(
@@ -25,24 +21,13 @@ router.get('/export', role('PROFESSOR'), async (_req, res) => {
        FROM submissions s JOIN assignments a ON a.id = s.assignment_id
        GROUP BY s.student_id, a.subject_id`
     ),
-    pool.query(
-      `SELECT r.student_id, ss.subject_id, COUNT(*)::int attended
-       FROM attendance_records r JOIN attendance_sessions ss ON ss.id = r.session_id
-       GROUP BY r.student_id, ss.subject_id`
-    ),
-    pool.query('SELECT subject_id, COUNT(*)::int total FROM attendance_sessions GROUP BY subject_id'),
   ]);
   const subsMap = new Map(subs.rows.map((r: any) => [`${r.student_id}:${r.subject_id}`, r]));
-  const attMap = new Map(atts.rows.map((r: any) => [`${r.student_id}:${r.subject_id}`, r]));
-  const sessMap = new Map(sessions.rows.map((r: any) => [r.subject_id, r.total]));
   const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const lines = ['Aluno;Email;Disciplina;Entregas;Corrigidas;Media (0-10);Presenca;Presencas/Sessoes'];
+  const lines = ['Aluno;Email;Disciplina;Entregas;Corrigidas;Media (0-10)'];
   for (const u of students.rows) {
     for (const s of subjects.rows) {
       const g = subsMap.get(`${u.id}:${s.id}`);
-      const a = attMap.get(`${u.id}:${s.id}`);
-      const total = sessMap.get(s.id) || 0;
-      const attended = a?.attended || 0;
       const avg = g?.avg !== null && g?.avg !== undefined ? round1(g.avg) : '';
       lines.push(
         [
@@ -52,8 +37,6 @@ router.get('/export', role('PROFESSOR'), async (_req, res) => {
           g?.submitted || 0,
           g?.graded || 0,
           avg,
-          total ? `${pct(attended, total)}%` : '',
-          `${attended}/${total}`,
         ].join(';')
       );
     }
@@ -68,21 +51,12 @@ router.get('/', async (req: AuthRequest, res) => {
 
   if (req.user!.role === 'ALUNO') {
     const uid = req.user!.id;
-    const [assignments, attendance, progress] = await Promise.all([
+    const [assignments, progress] = await Promise.all([
       pool.query(
         `SELECT a.id, a.subject_id, a.title, a.due_date, a.max_score, s.score, s.submitted_at
          FROM assignments a
          LEFT JOIN submissions s ON s.assignment_id = a.id AND s.student_id = $1
          ORDER BY a.due_date`,
-        [uid]
-      ),
-      pool.query(
-        `SELECT ss.subject_id,
-                COUNT(*)::int total,
-                COUNT(r.id)::int attended
-         FROM attendance_sessions ss
-         LEFT JOIN attendance_records r ON r.session_id = ss.id AND r.student_id = $1
-         GROUP BY ss.subject_id`,
         [uid]
       ),
       pool.query(
@@ -96,7 +70,6 @@ router.get('/', async (req: AuthRequest, res) => {
       ),
     ]);
 
-    const attMap = new Map(attendance.rows.map((r: any) => [r.subject_id, r]));
     const progMap = new Map(progress.rows.map((r: any) => [r.subject_id, r]));
     const now = Date.now();
 
@@ -113,19 +86,13 @@ router.get('/', async (req: AuthRequest, res) => {
             ) / graded.length
           )
         : null;
-      const att = attMap.get(s.id) || { total: 0, attended: 0 };
       const prog = progMap.get(s.id) || { total: 0, done: 0 };
       return {
         id: s.id,
         name: s.name,
         code: s.code,
         avg,
-        attendance: {
-          attended: att.attended,
-          total: att.total,
-          pct: pct(att.attended, att.total),
-        },
-        progress: { done: prog.done, total: prog.total, pct: pct(prog.done, prog.total) },
+        progress: { done: prog.done, total: prog.total, pct: prog.total ? Math.round((prog.done / prog.total) * 100) : null },
         assignments: list.map((a: any) => ({
           id: a.id,
           title: a.title,
@@ -155,10 +122,6 @@ router.get('/', async (req: AuthRequest, res) => {
           ) / allGraded.length
         )
       : null;
-    const attTotals = [...attMap.values()].reduce(
-      (acc, r) => ({ attended: acc.attended + r.attended, total: acc.total + r.total }),
-      { attended: 0, total: 0 }
-    );
     const progTotals = [...progMap.values()].reduce(
       (acc, r) => ({ done: acc.done + r.done, total: acc.total + r.total }),
       { done: 0, total: 0 }
@@ -168,8 +131,7 @@ router.get('/', async (req: AuthRequest, res) => {
       role: 'ALUNO',
       overall: {
         avg: overallAvg,
-        attendancePct: pct(attTotals.attended, attTotals.total),
-        progressPct: pct(progTotals.done, progTotals.total),
+        progressPct: progTotals.total ? Math.round((progTotals.done / progTotals.total) * 100) : null,
         pending: subjectsOut.reduce(
           (acc, s) => acc + s.assignments.filter((a: any) => a.status === 'PENDING').length,
           0
@@ -184,7 +146,7 @@ router.get('/', async (req: AuthRequest, res) => {
     return;
   }
 
-  const [students, subs, atts, sessions, assignmentsBySubject, pendingGrading] = await Promise.all([
+  const [students, subs, assignmentsBySubject, pendingGrading] = await Promise.all([
     pool.query("SELECT id, name, email FROM users WHERE role='ALUNO' ORDER BY name"),
     pool.query(
       `SELECT s.student_id, a.subject_id,
@@ -194,12 +156,6 @@ router.get('/', async (req: AuthRequest, res) => {
        FROM submissions s JOIN assignments a ON a.id = s.assignment_id
        GROUP BY s.student_id, a.subject_id`
     ),
-    pool.query(
-      `SELECT r.student_id, ss.subject_id, COUNT(*)::int attended
-       FROM attendance_records r JOIN attendance_sessions ss ON ss.id = r.session_id
-       GROUP BY r.student_id, ss.subject_id`
-    ),
-    pool.query('SELECT subject_id, COUNT(*)::int total FROM attendance_sessions GROUP BY subject_id'),
     pool.query('SELECT subject_id, COUNT(*)::int total FROM assignments GROUP BY subject_id'),
     pool.query(
       `SELECT a.subject_id, COUNT(*)::int pending
@@ -210,8 +166,6 @@ router.get('/', async (req: AuthRequest, res) => {
   ]);
 
   const subsMap = new Map(subs.rows.map((r: any) => [`${r.student_id}:${r.subject_id}`, r]));
-  const attMap = new Map(atts.rows.map((r: any) => [`${r.student_id}:${r.subject_id}`, r]));
-  const sessMap = new Map(sessions.rows.map((r: any) => [r.subject_id, r.total]));
   const assignMap = new Map(assignmentsBySubject.rows.map((r: any) => [r.subject_id, r.total]));
   const pendMap = new Map(pendingGrading.rows.map((r: any) => [r.subject_id, r.pending]));
 
@@ -222,7 +176,6 @@ router.get('/', async (req: AuthRequest, res) => {
       name: s.name,
       code: s.code,
       assignments: assignMap.get(s.id) || 0,
-      sessions: sessMap.get(s.id) || 0,
       pendingGrading: pendMap.get(s.id) || 0,
     })),
     students: students.rows.map((u: any) => ({
@@ -238,14 +191,6 @@ router.get('/', async (req: AuthRequest, res) => {
               ? { submitted: g.submitted, graded: g.graded, avg: g.avg !== null ? round1(g.avg) : null }
               : { submitted: 0, graded: 0, avg: null },
           ];
-        })
-      ),
-      attendance: Object.fromEntries(
-        subjects.rows.map((s: any) => {
-          const a = attMap.get(`${u.id}:${s.id}`);
-          const total = sessMap.get(s.id) || 0;
-          const attended = a?.attended || 0;
-          return [s.id, { attended, total, pct: pct(attended, total) }];
         })
       ),
     })),

@@ -115,7 +115,7 @@ export default function ResetPassword() {
           {loading ? 'Enviando...' : token ? 'Salvar nova senha' : 'Enviar link'}
         </button>
         <p className="text-sm mt-5 text-center">
-          <Link to="/login" className="text-blue-600 font-semibold">
+          <Link to="/login" className="text-violet-600 font-semibold">
             Voltar ao login
           </Link>
         </p>

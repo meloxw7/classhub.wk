@@ -18,6 +18,28 @@ import { useToast } from '../components/Toast';
 import { EmptyState, Skeleton, SkeletonCard } from '../components/Feedback';
 import { initials, subjectColor } from '../lib/colors';
 
+function useCountUp(target: number, duration = 700) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const tick = (t: number) => {
+      const progress = Math.min((t - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(target * eased));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return display;
+}
+
+function StatValue({ value }: { value: number }) {
+  const display = useCountUp(value);
+  return <>{display}</>;
+}
+
 function urgency(dueDate: string) {
   const diffH = (new Date(dueDate).getTime() - Date.now()) / 3600000;
 
@@ -104,6 +126,31 @@ export default function Dashboard() {
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .slice(0, 5);
 
+  const nextUp = upcoming[0];
+
+  function greeting() {
+    const hour = now.getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }
+
+  function countdown(dueDate: string) {
+    const diffMs = new Date(dueDate).getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / 86400000);
+    if (diffDays <= 0)
+      return `hoje às ${new Date(dueDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    if (diffDays === 1) return 'amanhã';
+    return `em ${diffDays} dias`;
+  }
+
+  const fullDate = now.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
   const bySubject = subjects
     .map((s) => ({
       ...s,
@@ -118,7 +165,7 @@ export default function Dashboard() {
           label: 'Total de tarefas',
           value: assignments.length,
           icon: ClipboardCheck,
-          bg: 'bg-blue-50 text-blue-600',
+          bg: 'bg-violet-50 text-violet-600',
         },
         {
           label: 'Provas',
@@ -144,7 +191,7 @@ export default function Dashboard() {
           label: 'Total de tarefas',
           value: assignments.length,
           icon: ClipboardCheck,
-          bg: 'bg-blue-50 text-blue-600',
+          bg: 'bg-violet-50 text-violet-600',
         },
         {
           label: 'Provas',
@@ -168,16 +215,44 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-7">
-        <p className="text-blue-600 font-semibold">Visão geral</p>
-
-        <h2 className="section-title mt-1">Dashboard</h2>
-
-        <p className="muted mt-2">
-          {user?.role === 'PROFESSOR'
-            ? 'Gerencie entregas e acompanhe a turma.'
-            : 'Suas entregas, prazos e urgências em um só lugar.'}
-        </p>
+      {/* HERO */}
+      <div className="card relative overflow-hidden p-6 mb-6 bg-gradient-to-r from-violet-50 via-white to-white dark:from-violet-950/40 dark:via-[#14141a] dark:to-[#14141a]">
+        <div className="absolute -top-16 -right-10 w-56 h-56 bg-violet-200/40 dark:bg-violet-800/20 rounded-full blur-3xl" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="eyebrow">{user?.role === 'PROFESSOR' ? 'Visão geral do professor' : 'Visão geral'}</p>
+            <h2 className="section-title mt-1">
+              {greeting()}, {user?.name?.split(' ')[0]}
+            </h2>
+            <p className="muted mt-1 capitalize">{fullDate}</p>
+          </div>
+          <div className="text-right">
+            {nextUp ? (
+              <>
+                <p className="eyebrow mb-1">
+                  {isStudent ? 'Próxima entrega' : 'Próximo prazo'}
+                </p>
+                <div className="inline-flex items-center gap-2 bg-white dark:bg-[#1b1b24] border border-slate-200 dark:border-slate-700 rounded-full pl-3 pr-4 py-2 shadow-sm">
+                  <Clock size={15} className="text-violet-600 dark:text-violet-400" />
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {nextUp.title}
+                  </span>
+                  <span className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase">
+                    {countdown(nextUp.due_date)}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">{nextUp.subject_name}</p>
+              </>
+            ) : (
+              <div className="inline-flex items-center gap-2 bg-white dark:bg-[#1b1b24] border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2 shadow-sm">
+                <CheckCircle2 size={15} className="text-emerald-500" />
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                  Nenhum prazo à frente
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 4 CARDS */}
@@ -191,11 +266,11 @@ export default function Dashboard() {
                     <p className="text-xs font-semibold text-slate-500">{card.label}</p>
 
                     <p
-                      className={`text-3xl font-black mt-2 ${
+                      className={`text-3xl font-black mt-2 tabular-nums ${
                         card.label === 'Atrasadas' && overdue.length ? 'text-red-600' : ''
                       }`}
                     >
-                      {card.value}
+                      <StatValue value={card.value} />
                     </p>
                   </div>
 
@@ -315,7 +390,7 @@ export default function Dashboard() {
           {/* TAREFAS POR DISCIPLINA */}
           <div className="card p-6">
             <div className="flex items-center gap-2 mb-4">
-              <CalendarDays className="text-blue-600" size={19} />
+              <CalendarDays className="text-violet-600" size={19} />
 
               <h3 className="font-bold">Tarefas por disciplina</h3>
             </div>
@@ -340,13 +415,13 @@ export default function Dashboard() {
                         <p className="font-semibold text-sm truncate">{s.name}</p>
                       </div>
 
-                      <span className="text-sm font-black text-blue-600 shrink-0">
+                      <span className="text-sm font-black text-violet-600 shrink-0">
                         {s.count} {s.count === 1 ? 'tarefa' : 'tarefas'}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                        className="h-full rounded-full bg-violet-500 transition-all duration-500"
                         style={{ width: `${(s.count / Math.max(...bySubject.map((x) => x.count))) * 100}%` }}
                       />
                     </div>

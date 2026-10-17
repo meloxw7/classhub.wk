@@ -32,8 +32,8 @@ async function eventReminders() {
       });
       await notifyUsers(
         ids,
-        'AmanhÃ£: ' + e.title,
-        `${e.title} estÃ¡ marcado para ${when}${e.subject_name ? ' â€” ' + e.subject_name : ''}.`,
+        'Amanhã: ' + e.title,
+        `${e.title} está marcado para ${when}${e.subject_name ? ' — ' + e.subject_name : ''}.`,
         'EVENT'
       );
       await pool.query('UPDATE events SET reminder_sent_at=NOW() WHERE id=$1', [e.id]);
@@ -79,7 +79,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     const payload = jwt.verify(url.searchParams.get('token') || '', getJwtSecret()) as any;
     user = { id: payload.id, name: payload.name };
   } catch {
-    ws.close(4001, 'NÃ£o autenticado');
+    ws.close(4001, 'Não autenticado');
     return;
   }
   ws.on('message', async (raw) => {

@@ -1,1 +1,1 @@
-{"name":"ClassHub","short_name":"ClassHub","start_url":"/","display":"standalone","background_color":"#f5f8fc","theme_color":"#2563eb","description":"Portal acadêmico integrado"}
+{"name":"ClassHub","short_name":"ClassHub","start_url":"/","display":"standalone","background_color":"#fafafa","theme_color":"#7c3aed","description":"Portal acadêmico integrado","icons":[{"src":"/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}

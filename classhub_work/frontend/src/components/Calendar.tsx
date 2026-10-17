@@ -7,7 +7,7 @@ const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const typeChip: Record<string, string> = {
   PROVA: 'bg-red-100 text-red-700',
   TRABALHO: 'bg-amber-100 text-amber-700',
-  AULA: 'bg-blue-100 text-blue-700',
+  AULA: 'bg-violet-100 text-violet-700',
 };
 
 export function dayKey(date: Date) {
@@ -90,7 +90,7 @@ export default function Calendar({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div key={dayKey(view)} className="grid grid-cols-7 gap-1 page-in">
         {cells.map((day) => {
           const key = dayKey(day);
           const inMonth = day.getMonth() === view.getMonth();
@@ -106,31 +106,28 @@ export default function Calendar({
                 ${inMonth ? '' : 'opacity-30'}
                 ${
                   isSelected
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 scale-105'
                     : isToday
-                      ? 'bg-blue-50 text-blue-700 font-black'
-                      : 'hover:bg-slate-100'
+                      ? 'ring-2 ring-violet-500 text-violet-700 font-black bg-violet-50/60'
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
             >
-              <span className="text-sm">{day.getDate()}</span>
+              <span className="text-sm leading-none">{day.getDate()}</span>
 
               {dayEvents.length > 0 && (
-                <span className="flex w-6 h-1 rounded-full overflow-hidden">
-                  {dayEvents.slice(0, 4).map((event: any, index: number) => (
+                <span className="flex gap-0.5 mt-0.5">
+                  {dayEvents.slice(0, 3).map((event: any, index: number) => (
                     <span
                       key={index}
-                      className="flex-1"
-                      style={{
-                        background: eventColor(event),
-                      }}
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: eventColor(event) }}
                     />
                   ))}
-                </span>
-              )}
-
-              {dayEvents.length > 4 && (
-                <span className="text-[9px] leading-none font-bold text-slate-400">
-                  +{dayEvents.length - 4}
+                  {dayEvents.length > 3 && (
+                    <span className="text-[9px] leading-none font-bold text-slate-400 -mt-0.5">
+                      +{dayEvents.length - 3}
+                    </span>
+                  )}
                 </span>
               )}
             </button>

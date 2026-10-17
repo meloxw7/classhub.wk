@@ -101,7 +101,7 @@ export default function SearchPage() {
           {results.materials.length > 0 && (
             <section className="card p-5">
               <h3 className="font-bold mb-3 flex items-center gap-2">
-                <FileText size={18} className="text-blue-600" /> Materiais
+                <FileText size={18} className="text-violet-600" /> Materiais
               </h3>
               <ul className="space-y-2">
                 {results.materials.map((m) => (

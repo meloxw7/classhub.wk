@@ -5,4 +5,8 @@ export type User = {
   email: string;
   role: Role;
   avatar_path?: string | null;
+  course?: string | null;
+  semester?: string | null;
+  ra?: string | null;
+  institution?: string | null;
 };

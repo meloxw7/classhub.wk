@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import SubjectDetail from './pages/SubjectDetail';
@@ -12,7 +13,6 @@ import {
   Agenda,
   Assignments,
   Forum,
-  Attendance,
   Rooms,
   Notifications,
   ProfessorPanel,
@@ -43,6 +43,7 @@ export default function App() {
         <ConfirmProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Register />} />
             <Route path="/resetar-senha" element={<ResetPassword />} />
             <Route element={<Private />}>
               <Route path="/" element={<Dashboard />} />
@@ -55,7 +56,6 @@ export default function App() {
               <Route path="/trabalhos" element={<Assignments />} />
               <Route path="/boletim" element={<Boletim />} />
               <Route path="/forum" element={<Forum />} />
-              <Route path="/presenca" element={<Attendance />} />
               <Route path="/salas" element={<Rooms />} />
               <Route path="/abnt" element={<Abnt />} />
               <Route path="/perfil" element={<Profile />} />

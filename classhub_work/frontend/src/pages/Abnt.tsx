@@ -451,7 +451,7 @@ export default function Abnt() {
   return (
     <div>
       <div className="mb-7">
-        <p className="text-blue-600 font-semibold">Ferramentas</p>
+        <p className="text-violet-600 font-semibold">Ferramentas</p>
 
         <h2 className="section-title mt-1">Conversor ABNT</h2>
 

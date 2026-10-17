@@ -3,41 +3,55 @@
 @tailwind utilities;
 body {
   margin: 0;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  background: #f5f8fc;
-  color: #102033;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: #fafafa;
+  color: #101014;
+  -webkit-font-smoothing: antialiased;
 }
 * {
   box-sizing: border-box;
 }
-.card {
-  @apply bg-white border border-slate-200 rounded-2xl shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-0.5;
+::selection {
+  background: #ede9fe;
+  color: #4c1d95;
 }
+/* ---- superfícies ---- */
+.card {
+  @apply bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_2px_rgba(16,16,20,0.04)] transition duration-300;
+}
+.card:hover {
+  @apply border-slate-300 shadow-md -translate-y-0.5;
+}
+/* ---- botões ---- */
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold transition disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold transition disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98];
+}
+.btn:focus-visible {
+  @apply outline-none ring-2 ring-violet-500/40 ring-offset-1;
 }
 .btn-primary {
-  @apply btn bg-blue-600 text-white hover:bg-blue-700;
+  @apply btn bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800;
 }
 .btn-secondary {
-  @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200;
+  @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300;
 }
 .btn-danger {
-  @apply btn bg-red-50 text-red-700 hover:bg-red-100;
+  @apply btn bg-red-50 text-red-700 border border-red-100 hover:bg-red-100;
 }
+/* ---- formulários ---- */
 .input {
-  @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition placeholder:text-slate-400;
+}
+.input:focus {
+  @apply border-violet-400 ring-4 ring-violet-500/10;
+}
+.input.pl-10 {
+  padding-left: 2.5rem;
 }
 .label {
   @apply mb-1.5 block text-sm font-medium text-slate-700;
 }
+/* ---- pequenos ---- */
 .badge {
   @apply inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-500 text-white font-bold;
 }
@@ -45,27 +59,39 @@ body {
   @apply text-sm text-slate-500;
 }
 .section-title {
-  @apply text-3xl font-black tracking-tight;
+  @apply text-3xl font-bold tracking-tight;
+}
+.eyebrow {
+  @apply text-xs font-bold tracking-widest uppercase text-violet-600;
 }
 .chip {
   @apply text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-2.5 py-1;
 }
-/* modo escuro: sobrescreve as utilitárias compartilhadas */
+.chip-brand {
+  @apply bg-violet-50 text-violet-700;
+}
+/* ---- modo escuro ---- */
 .dark body {
-  background: #0b1220;
-  color: #e2e8f0;
+  background: #0b0b10;
+  color: #e6e6ea;
 }
 .dark .card {
-  @apply bg-slate-900 border-slate-800;
+  @apply bg-[#14141a] border-slate-800/80;
+}
+.dark .card:hover {
+  @apply border-slate-700;
 }
 .dark .btn-secondary {
-  @apply bg-slate-800 text-slate-200 hover:bg-slate-700;
+  @apply bg-transparent text-slate-200 border-slate-700 hover:bg-slate-800/60 hover:border-slate-600;
 }
 .dark .btn-danger {
-  @apply bg-red-950 text-red-300 hover:bg-red-900;
+  @apply bg-red-950/60 text-red-300 border-red-900/60 hover:bg-red-900/60;
 }
 .dark .input {
-  @apply bg-slate-900 border-slate-700 text-slate-100 focus:ring-blue-900;
+  @apply bg-[#14141a] border-slate-700 text-slate-100;
+}
+.dark .input:focus {
+  @apply border-violet-500 ring-4 ring-violet-500/20;
 }
 .dark .label {
   @apply text-slate-300;
@@ -76,6 +102,14 @@ body {
 .dark .chip {
   @apply bg-slate-800 text-slate-300;
 }
+.dark .chip-brand {
+  @apply bg-violet-950/70 text-violet-300;
+}
+.dark ::selection {
+  background: #4c1d95;
+  color: #ede9fe;
+}
+/* ---- animações ---- */
 @keyframes page-in {
   from {
     opacity: 0;
@@ -89,6 +123,18 @@ body {
 .page-in {
   animation: page-in 0.25s ease-out;
 }
+/* entrada escalonada dos blocos da página */
+.page-in > * > * {
+  animation: page-in 0.4s ease-out both;
+}
+.page-in > * > *:nth-child(1) { animation-delay: 0.02s; }
+.page-in > * > *:nth-child(2) { animation-delay: 0.07s; }
+.page-in > * > *:nth-child(3) { animation-delay: 0.12s; }
+.page-in > * > *:nth-child(4) { animation-delay: 0.17s; }
+.page-in > * > *:nth-child(5) { animation-delay: 0.22s; }
+.page-in > * > *:nth-child(6) { animation-delay: 0.27s; }
+.page-in > * > *:nth-child(7) { animation-delay: 0.32s; }
+.page-in > * > *:nth-child(8) { animation-delay: 0.37s; }
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -101,4 +147,96 @@ body {
 }
 .toast-in {
   animation: toast-in 0.2s ease-out;
+}
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+.toast-progress {
+  animation: toast-progress linear forwards;
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pop-in {
+  animation: pop-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.origin-in-top {
+  transform-origin: top right;
+}
+.origin-in-center {
+  transform-origin: center;
+}
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.backdrop-in {
+  animation: backdrop-in 0.2s ease-out;
+}
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.float-soft {
+  animation: float-soft 7s ease-in-out infinite;
+}
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-slide-in {
+  animation: fade-slide-in 0.3s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.06), transparent);
+  animation: shimmer 1.6s infinite;
 }

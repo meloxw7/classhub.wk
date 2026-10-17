@@ -8,32 +8,117 @@ import { sendMail } from '../lib/mailer';
 
 const router = Router();
 
-async function issueSession(user: { id: string; name: string; email: string; role: string }) {
+const INSTITUTIONS: Record<string, string> = {
+  NASSAU14: 'Uninassau Boa Viagem',
+  CZC14: 'Colégio Zuleide Constantino',
+  CSL: 'Colégio Souza Leão',
+  UNB14: 'Unibra Faculdade',
+};
+for (const pair of String(process.env.INSTITUTION_CODES || '').split(';').filter(Boolean)) {
+  const parts = pair.split(':');
+  if (parts.length >= 2)
+    INSTITUTIONS[parts[0].trim().toUpperCase()] = parts.slice(1).join(':').trim();
+}
+
+async function issueSession(
+  user: { id: string; name: string; email: string; role: string },
+  remember = false
+) {
   const token = jwt.sign(
     { id: user.id, name: user.name, email: user.email, role: user.role },
     getJwtSecret(),
     { expiresIn: '2h' }
   );
   const refreshToken = generateToken();
+  const ttl = remember ? '30 days' : '1 day';
   await pool.query(
-    "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, NOW() + INTERVAL '30 days')",
+    `INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, NOW() + INTERVAL '${ttl}')`,
     [user.id, hashToken(refreshToken)]
   );
   return { token, refreshToken };
 }
 
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, rememberMe } = req.body || {};
   if (!email || !password)
     return res.status(400).json({ message: 'E-mail e senha são obrigatórios' });
-  const r = await pool.query('SELECT id,name,email,password_hash,role FROM users WHERE email=$1', [
-    email,
-  ]);
+  const r = await pool.query(
+    'SELECT id,name,email,password_hash,role,course,semester,ra,institution FROM users WHERE email=$1',
+    [String(email).toLowerCase().trim()]
+  );
   if (!r.rowCount || !(await bcrypt.compare(password, r.rows[0].password_hash)))
     return res.status(401).json({ message: 'Credenciais inválidas' });
   const u = r.rows[0];
-  const session = await issueSession(u);
-  res.json({ ...session, user: { id: u.id, name: u.name, email: u.email, role: u.role } });
+  const session = await issueSession(u, !!rememberMe);
+  const { password_hash: _hash, ...user } = u;
+  res.json({ ...session, user });
+});
+
+router.post('/register', async (req, res) => {
+  const body = req.body || {};
+  const name = String(body.name || '').trim();
+  const email = String(body.email || '')
+    .toLowerCase()
+    .trim();
+  const password = String(body.password || '');
+  const role = String(body.role || '').toUpperCase();
+  const course = body.course ? String(body.course).trim() : null;
+  const semester = body.semester ? String(body.semester).trim() : null;
+  const ra = body.ra ? String(body.ra).trim() : null;
+  const subjectName = body.subjectName ? String(body.subjectName).trim() : '';
+
+  if (!name || name.length < 2) return res.status(400).json({ message: 'Informe seu nome completo' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return res.status(400).json({ message: 'E-mail inválido' });
+  if (password.length < 6)
+    return res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres' });
+  if (role !== 'ALUNO' && role !== 'PROFESSOR')
+    return res.status(400).json({ message: 'Escolha o perfil (aluno ou professor)' });
+
+  let institution: string | null = null;
+  if (role === 'PROFESSOR') {
+    const institutionCode = String(body.institutionCode || '').trim();
+    if (!institutionCode)
+      return res
+        .status(400)
+        .json({ message: 'Professores precisam informar o código da instituição' });
+    institution = INSTITUTIONS[institutionCode.toUpperCase()];
+    if (!institution) return res.status(403).json({ message: 'Código de instituição inválido' });
+    if (!subjectName)
+      return res.status(400).json({ message: 'Informe o nome da disciplina que você leciona' });
+  }
+
+  const exists = await pool.query('SELECT 1 FROM users WHERE email=$1', [email]);
+  if (exists.rowCount) return res.status(409).json({ message: 'Este e-mail já está cadastrado' });
+
+  const hash = await bcrypt.hash(password, 10);
+  const client = await pool.connect();
+  let u: any;
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(
+      `INSERT INTO users(name,email,password_hash,role,course,semester,ra,institution)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING id,name,email,role,course,semester,ra,institution`,
+      [name, email, hash, role, course, semester, ra, institution]
+    );
+    u = r.rows[0];
+    if (role === 'PROFESSOR') {
+      await client.query('INSERT INTO subjects(name,professor_id) VALUES($1,$2)', [
+        subjectName,
+        u.id,
+      ]);
+    }
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    client.release();
+    throw error;
+  }
+  client.release();
+
+  const session = await issueSession(u, true);
+  res.status(201).json({ ...session, user: u });
 });
 
 router.post('/refresh', async (req, res) => {

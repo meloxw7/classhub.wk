@@ -8,17 +8,15 @@ import {
   Plus,
   Send,
   Upload,
-  Users,
   CalendarPlus,
   MessageCircle,
   ClipboardCheck,
-  Clock,
   Loader2,
   Trash2,
   ArrowRight,
 } from 'lucide-react';
 
-import { api, fileUrl, downloadCsv } from '../lib/api';
+import { api, fileUrl } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { enableNotifications } from '../lib/pwa';
 import { useToast } from '../components/Toast';
@@ -55,7 +53,7 @@ const Shell = ({
   <div>
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-7">
       <div>
-        <p className="text-blue-600 font-semibold">ClassHub</p>
+        <p className="text-violet-600 font-semibold">ClassHub</p>
 
         <h2 className="section-title mt-1">{title}</h2>
 
@@ -170,7 +168,7 @@ export function Subjects() {
 
               <p className="text-xs text-slate-400 mt-3">Semestre {subject.semester}</p>
 
-              <span className="text-xs text-blue-600 font-semibold mt-3 flex items-center gap-1">
+              <span className="text-xs text-violet-600 font-semibold mt-3 flex items-center gap-1">
                 Ver detalhes
                 <ArrowRight size={13} />
               </span>
@@ -402,7 +400,7 @@ export function Materials() {
                 <span className="text-xs text-slate-400">v{material.version}</span>
               </div>
 
-              <span className="chip mt-3 inline-flex bg-blue-50 text-blue-700">
+              <span className="chip mt-3 inline-flex bg-violet-50 text-violet-700">
                 {material.type}
               </span>
 
@@ -428,7 +426,7 @@ export function Materials() {
 
               {material.url && (
                 <a
-                  className="text-blue-600 text-sm font-semibold inline-block mt-4"
+                  className="text-violet-600 text-sm font-semibold inline-block mt-4"
                   href={material.url}
                   target="_blank"
                   rel="noreferrer"
@@ -439,7 +437,7 @@ export function Materials() {
 
               {material.file_path && (
                 <a
-                  className="text-blue-600 text-sm font-semibold inline-block mt-4"
+                  className="text-violet-600 text-sm font-semibold inline-block mt-4"
                   href={fileUrl(material.file_path)}
                   target="_blank"
                   rel="noreferrer"
@@ -1083,7 +1081,7 @@ export function Agenda() {
               onClick={() => setForm({ ...form, color })}
               className={`w-7 h-7 rounded-full transition ${
                 form.color === color
-                  ? 'ring-2 ring-offset-2 ring-blue-600 scale-110'
+                  ? 'ring-2 ring-offset-2 ring-violet-600 scale-110'
                   : 'hover:scale-110'
               }`}
               style={{ background: color }}
@@ -1331,7 +1329,7 @@ export function Assignments() {
                   )}
 
                   {assignment.feedback && (
-                    <div className="mt-3 rounded-xl bg-blue-50 p-3 text-sm">
+                    <div className="mt-3 rounded-xl bg-violet-50 p-3 text-sm">
                       {assignment.feedback}
                     </div>
                   )}
@@ -1701,7 +1699,7 @@ export function Forum() {
         {!loading &&
           items.map((item) => (
             <div className="card p-5" key={item.id}>
-              <p className="text-xs text-blue-600 font-bold">
+              <p className="text-xs text-violet-600 font-bold">
                 {item.material_title} • {item.author_name || 'Usuário'}
               </p>
 
@@ -1712,7 +1710,7 @@ export function Forum() {
                   <div
                     key={response.id}
                     className={`rounded-xl p-3 ${
-                      response.official ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'
+                      response.official ? 'bg-violet-50 border border-violet-100' : 'bg-slate-50'
                     }`}
                   >
                     <p className="text-sm">{response.content}</p>
@@ -1760,260 +1758,6 @@ export function Forum() {
           />
         )}
       </div>
-    </Shell>
-  );
-}
-
-/* =========================================================
-   PRESENÇA
-========================================================= */
-
-export function Attendance() {
-  const { user } = useAuth();
-  const toast = useToast();
-
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [subjectId, setSubjectId] = useState('');
-  const [minutes, setMinutes] = useState('10');
-  const [pin, setPin] = useState('');
-  const [active, setActive] = useState<any>(null);
-  const [mine, setMine] = useState<any[]>([]);
-  const [sessions, setSessions] = useState<any[]>([]);
-
-  async function loadSessions() {
-    try {
-      const response = await api.get('/attendance/sessions');
-
-      setSessions(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar chamadas:', error);
-    }
-  }
-
-  useEffect(() => {
-    async function initialize() {
-      try {
-        const subjectResponse = await api.get('/subjects');
-
-        setSubjects(subjectResponse.data);
-
-        if (subjectResponse.data[0]) {
-          setSubjectId(subjectResponse.data[0].id);
-        }
-
-        if (user?.role === 'ALUNO') {
-          const response = await api.get('/attendance/mine');
-
-          setMine(response.data);
-        } else {
-          await loadSessions();
-        }
-      } catch (error) {
-        console.error('Erro ao carregar presença:', error);
-        toast.error('Não foi possível carregar a presença.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    initialize();
-  }, [user?.role, toast]);
-
-  async function open() {
-    try {
-      const response = await api.post('/attendance/open', {
-        subjectId,
-        minutes: Number(minutes),
-      });
-
-      setActive(response.data);
-      await loadSessions();
-      toast.success('Chamada aberta.');
-    } catch (error) {
-      console.error('Erro ao abrir chamada:', error);
-      toast.error('Não foi possível abrir a chamada.');
-    }
-  }
-
-  async function closeSession(session: any) {
-    try {
-      await api.patch(`/attendance/sessions/${session.id}/close`);
-
-      if (active?.id === session.id) {
-        setActive(null);
-      }
-
-      await loadSessions();
-      toast.success('Chamada encerrada.');
-    } catch (error: any) {
-      console.error('Erro ao encerrar chamada:', error);
-      toast.error(error.response?.data?.message || 'Não foi possível encerrar a chamada.');
-    }
-  }
-
-  async function mark() {
-    try {
-      await api.post('/attendance/mark', { pin });
-
-      setPin('');
-      toast.success('Presença registrada!');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro');
-    }
-  }
-
-  return (
-    <Shell title="Presença" desc="Chamada por PIN temporário e histórico de presença.">
-      {user?.role === 'PROFESSOR' ? (
-        <>
-          <div className="card p-5">
-            <div className="grid md:grid-cols-4 gap-2">
-              <select
-                className="input"
-                value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value)}
-              >
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                className="input"
-                value={minutes}
-                onChange={(e) => setMinutes(e.target.value)}
-                placeholder="Minutos"
-              />
-
-              <button className="btn-primary" onClick={open}>
-                <Clock size={16} />
-                Abrir chamada
-              </button>
-
-              <button
-                className="btn-secondary"
-                onClick={async () => {
-                  try {
-                    await downloadCsv('/attendance/export', 'presencas-classhub.csv');
-                    toast.success('CSV exportado.');
-                  } catch {
-                    toast.error('Não foi possível exportar o CSV.');
-                  }
-                }}
-              >
-                <Download size={16} />
-                Exportar CSV
-              </button>
-            </div>
-
-            {active && (
-              <div className="mt-5 rounded-2xl bg-blue-50 p-6 text-center">
-                <p className="text-sm text-blue-700">PIN da chamada</p>
-
-                <p className="text-5xl font-black tracking-[.25em] text-blue-700 mt-2">
-                  {active.pin}
-                </p>
-
-                <p className="text-sm text-slate-500 mt-2">
-                  Expira às {new Date(active.expires_at).toLocaleTimeString('pt-BR')}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-5 space-y-2">
-            {loading &&
-              Array.from({ length: 2 }).map((_, index) => (
-                <Skeleton key={index} className="h-16 w-full" />
-              ))}
-
-            {!loading &&
-              sessions.map((session) => (
-                <div className="card p-4 flex justify-between items-center" key={session.id}>
-                  <div>
-                    <b>{session.subject_name}</b>
-
-                    <p className="muted">
-                      PIN {session.pin} • {new Date(session.expires_at).toLocaleString('pt-BR')}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="chip">{session.present_count} presentes</span>
-
-                    {new Date(session.expires_at) > new Date() && (
-                      <button
-                        className="btn-danger text-sm px-3 py-2"
-                        onClick={() => closeSession(session)}
-                      >
-                        Encerrar
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-            {!loading && !sessions.length && (
-              <EmptyState
-                icon={Clock}
-                title="Nenhuma chamada registrada"
-                text="Abra uma chamada para registrar presenças."
-              />
-            )}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="card p-6 text-center">
-            <Users className="mx-auto text-blue-600" />
-
-            <h3 className="font-bold text-xl mt-3">Digite o PIN</h3>
-
-            <p className="muted mt-1">Peça o código ao professor.</p>
-
-            <input
-              className="input max-w-xs mx-auto mt-4 text-center text-2xl tracking-widest"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            />
-
-            <button className="btn-primary mt-3" onClick={mark}>
-              Registrar presença
-            </button>
-          </div>
-
-          <div className="mt-5 space-y-2">
-            {loading &&
-              Array.from({ length: 2 }).map((_, index) => (
-                <Skeleton key={index} className="h-16 w-full" />
-              ))}
-
-            {!loading &&
-              mine.map((item) => (
-                <div className="card p-4 flex justify-between" key={item.id}>
-                  <div>
-                    <b>{item.subject_name}</b>
-
-                    <p className="muted">{new Date(item.marked_at).toLocaleString('pt-BR')}</p>
-                  </div>
-
-                  <span className="text-green-600 font-semibold">Presente</span>
-                </div>
-              ))}
-
-            {!loading && !mine.length && (
-              <EmptyState
-                icon={Users}
-                title="Nenhuma presença ainda"
-                text="Digite o PIN informado pelo professor para registrar sua presença."
-              />
-            )}
-          </div>
-        </>
-      )}
     </Shell>
   );
 }
@@ -2148,7 +1892,7 @@ export function Rooms() {
           rooms.map((room) => (
             <button
               onClick={() => open(room)}
-              className="card p-5 text-left hover:border-blue-400"
+              className="card p-5 text-left hover:border-violet-400"
               key={room.id}
             >
               <span className="chip">{room.subject_name}</span>
@@ -2440,11 +2184,11 @@ export function Notifications() {
               key={notification.id}
               onClick={() => read(notification.id)}
               className={`w-full text-left card p-4 cursor-pointer ${
-                !notification.read_at ? 'border-blue-300 bg-blue-50/40' : ''
+                !notification.read_at ? 'border-violet-300 bg-violet-50/40' : ''
               }`}
             >
               <div className="flex gap-3">
-                <Bell className="text-blue-600 mt-1" size={18} />
+                <Bell className="text-violet-600 mt-1" size={18} />
 
                 <div className="flex-1">
                   <div className="flex justify-between gap-2">
@@ -2559,28 +2303,20 @@ export function ProfessorPanel() {
   return (
     <Shell title="Painel do professor" desc="Centralize as principais ações de gestão da turma.">
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <a className="card p-5 hover:border-blue-400" href="/materiais">
-          <FileText className="text-blue-600" />
+        <a className="card p-5 hover:border-violet-400" href="/materiais">
+          <FileText className="text-violet-600" />
 
           <b className="block mt-3">Publicar material</b>
 
           <span className="muted">PDF, vídeo, link e exercício.</span>
         </a>
 
-        <a className="card p-5 hover:border-blue-400" href="/trabalhos">
-          <ClipboardCheck className="text-blue-600" />
+        <a className="card p-5 hover:border-violet-400" href="/trabalhos">
+          <ClipboardCheck className="text-violet-600" />
 
           <b className="block mt-3">Gerenciar trabalhos</b>
 
           <span className="muted">Criar, corrigir e dar feedback.</span>
-        </a>
-
-        <a className="card p-5 hover:border-blue-400" href="/presenca">
-          <Users className="text-blue-600" />
-
-          <b className="block mt-3">Abrir chamada</b>
-
-          <span className="muted">PIN temporário.</span>
         </a>
       </div>
 

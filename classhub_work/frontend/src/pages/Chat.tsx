@@ -276,7 +276,7 @@ export default function Chat() {
   return (
     <div>
       <div className="mb-7">
-        <p className="text-blue-600 font-semibold">Tempo real</p>
+        <p className="text-violet-600 font-semibold">Tempo real</p>
 
         <h2 className="section-title mt-1">Chat da turma</h2>
 
@@ -316,7 +316,7 @@ export default function Chat() {
               </p>
             </div>
 
-            <MessagesSquare className="text-blue-600" />
+            <MessagesSquare className="text-violet-600" />
           </div>
 
           <div ref={scrollRef} className="h-[26rem] overflow-y-auto p-5 space-y-3 bg-slate-50/60">
@@ -350,18 +350,18 @@ export default function Chat() {
                     <div
                       className={`rounded-2xl px-4 py-2 max-w-[75%] ${
                         mine
-                          ? 'bg-blue-600 text-white rounded-br-sm'
+                          ? 'bg-violet-600 text-white rounded-br-sm'
                           : 'bg-white border border-slate-200 rounded-bl-sm'
                       }`}
                     >
                       {!mine && (
-                        <p className="text-xs font-bold text-blue-600 mb-0.5">{message.userName}</p>
+                        <p className="text-xs font-bold text-violet-600 mb-0.5">{message.userName}</p>
                       )}
 
                       <p className="text-sm break-words">{message.content}</p>
 
                       <p
-                        className={`text-[10px] mt-1 ${mine ? 'text-blue-200' : 'text-slate-400'}`}
+                        className={`text-[10px] mt-1 ${mine ? 'text-violet-200' : 'text-slate-400'}`}
                       >
                         {new Date(message.created_at).toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
