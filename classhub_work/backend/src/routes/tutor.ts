@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import multer from 'multer';
+import mammoth from 'mammoth';
 import { pool } from '../lib/db';
 import { auth, AuthRequest } from '../middleware/auth';
 
@@ -7,14 +9,53 @@ router.use(auth);
 
 const AI_MODEL = process.env.AI_MODEL || 'gemini-3.8-flash';
 
-router.post('/chat', async (req: AuthRequest, res) => {
+const ATTACHMENT_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.md', '.docx'];
+const attachmentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 3 },
+  fileFilter: (_, f, cb) => {
+    const ok = ATTACHMENT_EXTENSIONS.some((x) => f.originalname.toLowerCase().endsWith(x));
+    if (!ok) return cb(new Error('Anexos aceitos: .pdf, .png, .jpg, .txt, .md e .docx'));
+    cb(null, true);
+  },
+});
+
+async function fileToParts(file: Express.Multer.File): Promise<any[]> {
+  const name = file.originalname;
+  const lower = name.toLowerCase();
+  if (lower.endsWith('.docx')) {
+    const result = await mammoth.extractRawText({ buffer: file.buffer });
+    return [
+      { text: `\n\n[Arquivo anexado: ${name} — conteúdo em texto]\n${result.value.slice(0, 60000)}` },
+    ];
+  }
+  if (lower.endsWith('.txt') || lower.endsWith('.md')) {
+    return [
+      { text: `\n\n[Arquivo anexado: ${name}]\n${file.buffer.toString('utf8').slice(0, 60000)}` },
+    ];
+  }
+  const mime =
+    lower.endsWith('.pdf')
+      ? 'application/pdf'
+      : lower.endsWith('.png')
+        ? 'image/png'
+        : 'image/jpeg';
+  return [{ inlineData: { mimeType: mime, data: file.buffer.toString('base64') } }];
+}
+
+router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest, res) => {
   const apiKey = process.env.AI_API_KEY;
   if (!apiKey)
     return res
       .status(503)
       .json({ message: 'Tutor IA não configurado. Defina AI_API_KEY no servidor.' });
 
-  const incoming = Array.isArray(req.body?.messages) ? req.body.messages : [];
+  let parsed: any = {};
+  try {
+    parsed = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body;
+  } catch {}
+
+  const incoming = Array.isArray(parsed?.messages) ? parsed.messages : [];
   const contents = incoming
     .filter(
       (m: any) =>
@@ -26,6 +67,25 @@ router.post('/chat', async (req: AuthRequest, res) => {
     .map((m: any) => ({ role: m.role, parts: [{ text: String(m.content).slice(0, 8000) }] }));
   if (!contents.length || contents[contents.length - 1].role !== 'user')
     return res.status(400).json({ message: 'Envie uma mensagem para o tutor.' });
+
+  const files = (req.files as Express.Multer.File[] | undefined)?.slice(0, 3) || [];
+  if (files.length) {
+    try {
+      const extraParts = (await Promise.all(files.map(fileToParts))).flat();
+      const last = contents[contents.length - 1];
+      last.parts = [...last.parts, ...extraParts];
+      if (files.length === 1)
+        last.parts[0].text += `\n(Anexei o arquivo ${files[0].originalname}.)`;
+      else
+        last.parts[0].text += `\n(Anexei ${files.length} arquivos: ${files
+          .map((f) => f.originalname)
+          .join(', ')}.)`;
+    } catch (error: any) {
+      return res
+        .status(400)
+        .json({ message: error?.message || 'Não foi possível ler os anexos enviados.' });
+    }
+  }
 
   let subjects: string[] = [];
   try {
@@ -41,6 +101,8 @@ router.post('/chat', async (req: AuthRequest, res) => {
     'Responda sempre em português do Brasil, de forma didática, clara e motivadora.',
     'Use exemplos práticos, listas e blocos de código quando ajudar.',
     'Se não souber algo, admita e sugira onde procurar. Não invente regras acadêmicas.',
+    'O usuário pode anexar arquivos (PDF, imagens, texto). Analise-os quando presentes.',
+    'Se o usuário pedir um PDF, estruture a resposta como um documento completo e bem formatado — ele poderá exportá-la em PDF.',
   ]
     .filter(Boolean)
     .join('\n');
@@ -71,7 +133,7 @@ router.post('/chat', async (req: AuthRequest, res) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
         }),
       }
     );

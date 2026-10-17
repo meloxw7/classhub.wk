@@ -121,6 +121,8 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Respostas didáticas em PT-BR com **markdown** (negrito, listas, blocos de código)
 - Sugestões rápidas iniciais (explique um tópico, plano de estudos, simule uma prova, revise um texto)
 - Botão **parar geração** durante o streaming e **copiar resposta** ao final
+- **Anexos**: envie até 3 arquivos por mensagem (.pdf, .png, .jpg, .txt, .md — até 10 MB cada; .docx é lido como texto) — PDFs e imagens vão direto ao Gemini (multimodal), textos são anexados ao prompt
+- **Exportar PDF**: qualquer resposta do tutor abre uma janela de impressão formatada (margem A4, cabeçalho ClassHub, listas e código estilizados) — "Salvar como PDF" do navegador gera o documento
 - Histórico apenas na sessão (não persiste); sem dependências novas (REST + SSE via `fetch`)
 - Configuração: `AI_API_KEY` (Google Gemini, gere em aistudio.google.com) + `AI_MODEL` (padrão `gemini-3.8-flash`) no `.env` do backend; sem chave, a rota responde 503
 - A chave **nunca** vai ao frontend — o backend faz o proxy server-side
@@ -239,7 +241,7 @@ Backend e frontend usam **Vitest**. Os testes do backend são de dois tipos:
 Cada teste de integração cria os próprios dados em uma disciplina sandbox e limpa tudo ao final (delete em cascata + revogação dos refresh tokens criados); os testes de senha/avatar **restauram o estado original** das contas demo.
 
 ```bash
-cd backend   && npm test              # 75 testes (unit + integração)
+cd backend   && npm test              # 76 testes (unit + integração)
 cd frontend  && npm test              # 24 testes (colors, api/interceptor, Toast, ConfirmDialog)
 ```
 

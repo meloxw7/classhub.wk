@@ -286,4 +286,37 @@ describe.skipIf(!hasDb)('tutor IA', () => {
     expect(res.text).toContain('"text":", tudo bem?"');
     expect(res.text).toContain('[DONE]');
   });
+
+  it('aceita anexo multipart e o envia ao provedor', async () => {
+    const encoder = new TextEncoder();
+    const sse = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode('data: {"candidates":[{"content":{"parts":[{"text":"Li o anexo."}]}}]}\n\n')
+        );
+        controller.close();
+      },
+    });
+    let upstreamBody = '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: any) => {
+        upstreamBody = init.body;
+        return { ok: true, body: sse };
+      })
+    );
+    const res = await request(app)
+      .post('/api/tutor/chat')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .field('data', JSON.stringify({ messages: [{ role: 'user', content: 'analise' }] }))
+      .attach('files', Buffer.from('conteúdo da nota de estudo'), {
+        filename: 'nota.txt',
+        contentType: 'text/plain',
+      });
+    vi.unstubAllGlobals();
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('"text":"Li o anexo."');
+    expect(upstreamBody).toContain('nota.txt');
+    expect(upstreamBody).toContain('conteúdo da nota de estudo');
+  });
 });
