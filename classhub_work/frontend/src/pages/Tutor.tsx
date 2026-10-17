@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { apiBaseURL } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useToast } from '../components/Toast';
 
 type Message = {
   role: 'user' | 'model';
@@ -152,89 +153,40 @@ function boldParts(text: string): React.ReactNode {
   });
 }
 
-function esc(s: string) {
-  return String(s)
-    .replace(/&/g, '&' + 'amp;')
-    .replace(/</g, '&' + 'lt;')
-    .replace(/>/g, '&' + 'gt;')
-    .replace(/"/g, '&' + 'quot;');
-}
-
-function mdToHtml(text: string) {
-  const blocks = text.split(/```/);
-  return blocks
-    .map((block, i) => {
-      if (i % 2 === 1) {
-        const lines = block.split('\n');
-        const lang = /^[a-z]+$/i.test(lines[0].trim()) ? lines.shift() : '';
-        return `<pre>${lang ? `<div class="lang">${esc(String(lang))}</div>` : ''}${esc(lines.join('\n'))}</pre>`;
-      }
-      return block
-        .split('\n')
-        .map((line) => {
-          const h = line.match(/^#{1,3}\s+(.*)$/);
-          const b = line.match(/^\s*[-*]\s+(.*)$/);
-          const n = line.match(/^\s*\d+\.\s+(.*)$/);
-          const inline = (s: string) =>
-            esc(s)
-              .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-              .replace(/`([^`]+)`/g, '<code>$1</code>');
-          if (h) {
-            const level = Math.min(h[1] ? (line.match(/^#+/) || ['#'])[0].length : 1, 3);
-            return `<h${level}>${inline(h[1])}</h${level}>`;
-          }
-          if (b) return `<li>${inline(b[1])}</li>`;
-          if (n) return `<li>${inline(n[1])}</li>`;
-          return line.trim() ? `<p>${inline(line)}</p>` : '';
-        })
-        .join('\n')
-        .replace(/(<li>[\s\S]*?<\/li>)(\s*(?=<li>))?/g, '$1');
-    })
-    .join('\n')
-    .replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul>$1</ul>');
-}
-
-function exportPdf(content: string) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>ClassHub — Lumi</title>
-        <style>
-          @page { size: A4; margin: 2.2cm; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #101014; line-height: 1.65; font-size: 11pt; }
-          header { border-bottom: 3px solid #7c3aed; padding-bottom: 10pt; margin-bottom: 20pt; display: flex; align-items: center; gap: 10pt; }
-          .logo { width: 26pt; height: 26pt; border-radius: 7pt; background: #7c3aed; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13pt; }
-          .brand { font-size: 15pt; font-weight: 800; }
-          .brand span { color: #7c3aed; }
-          .date { margin-left: auto; color: #94a3b8; font-size: 8.5pt; }
-          h1, h2, h3 { margin: 14pt 0 6pt; color: #101014; }
-          p { margin: 6pt 0; text-align: justify; }
-          ul { margin: 6pt 0 6pt 18pt; }
-          li { margin: 3pt 0; }
-          code { background: #ede9fe; color: #5b21b6; padding: 1pt 4pt; border-radius: 4pt; font-size: 10pt; }
-          pre { background: #f5f3ff; border: 1pt solid #ddd6fe; border-radius: 8pt; padding: 10pt; margin: 8pt 0; white-space: pre-wrap; font-size: 9.5pt; }
-          pre .lang { color: #7c3aed; font-weight: 700; font-size: 8pt; margin-bottom: 4pt; text-transform: uppercase; }
-          b { color: #101014; }
-        </style>
-      </head>
-      <body>
-        <header>
-          <div class="logo">C</div>
-          <div class="brand">Class<span>Hub</span> — Lumi</div>
-          <div class="date">${new Date().toLocaleString('pt-BR')}</div>
-        </header>
-        ${mdToHtml(content)}
-        <script>window.print()</script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
+async function downloadPdf(content: string, title: string) {
+  const token = localStorage.getItem('classhub_token');
+  const res = await fetch(`${apiBaseURL}/tutor/pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ content, title }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: '' }));
+    throw new Error(data.message || 'Não foi possível gerar o PDF.');
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const slug = title
+    ? title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40)
+    : 'resposta';
+  link.download = `lumi-${slug || 'resposta'}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export default function Tutor() {
   const { user } = useAuth();
+  const toast = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -448,7 +400,18 @@ export default function Tutor() {
                         {copied === index ? 'Copiado!' : 'Copiar'}
                       </button>
                       <button
-                        onClick={() => exportPdf(message.content)}
+                        onClick={async () => {
+                          try {
+                            const firstLine = message.content
+                              .split('\n')
+                              .map((l) => l.replace(/^#+\s*/, '').replace(/[*`]/g, '').trim())
+                              .find(Boolean);
+                            await downloadPdf(message.content, firstLine || '');
+                            toast.success('PDF gerado e baixado.');
+                          } catch (e: any) {
+                            toast.error(e.message || 'Não foi possível gerar o PDF.');
+                          }
+                        }}
                         className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition"
                       >
                         <FileDown size={11} />

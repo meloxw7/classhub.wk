@@ -286,6 +286,27 @@ const spec = {
         },
       },
     },
+    '/api/tutor/pdf': {
+      post: {
+        tags: ['Lumi (IA)'],
+        summary: 'Gera um PDF real (download) de uma resposta da Lumi (markdown formatado)',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['content'],
+                properties: {
+                  content: { type: 'string' },
+                  title: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/grades': {
       get: { tags: ['Boletim'], summary: 'Notas por disciplina (boletim)' },
     },

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import mammoth from 'mammoth';
+import PDFDocument from 'pdfkit';
 import { pool } from '../lib/db';
 import { auth, AuthRequest } from '../middleware/auth';
 
@@ -182,6 +183,167 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
       res.write(`data: ${JSON.stringify({ error: 'Erro de conexão com o tutor.' })}\n\n`);
       res.end();
     } catch {}
+  }
+});
+
+/* ---- geração de PDF real (pdfkit) ---- */
+
+type InlinePart = { text: string; bold: boolean; code: boolean };
+
+function inlineSegments(line: string): InlinePart[] {
+  const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+  return parts.map((part) => ({
+    text: part.startsWith('**') ? part.slice(2, -2) : part.startsWith('`') ? part.slice(1, -1) : part,
+    bold: part.startsWith('**'),
+    code: part.startsWith('`'),
+  }));
+}
+
+async function renderPdf(content: string, title: string): Promise<Buffer> {
+  const doc = new PDFDocument({
+    size: 'A4',
+    margins: { top: 60, bottom: 60, left: 56, right: 56 },
+    info: { Title: title || 'Resposta da Lumi', Author: `${TUTOR_NAME} — ClassHub` },
+  });
+  const chunks: Buffer[] = [];
+  doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+  const finished = new Promise<Buffer>((resolve) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+
+  const pageWidth = doc.page.width;
+  const contentWidth = pageWidth - 56 * 2;
+  const ink = '#101014';
+  const violet = '#7c3aed';
+
+  // Cabeçalho
+  doc.roundedRect(56, 48, 26, 26, 6).fill(violet);
+  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(13).text('L', 64, 54);
+  doc.fillColor(ink).font('Helvetica-Bold').fontSize(14).text(`${TUTOR_NAME} — ClassHub`, 92, 50);
+  doc.fillColor('#94a3b8').font('Helvetica').fontSize(8).text(
+    new Date().toLocaleString('pt-BR'),
+    92,
+    66
+  );
+  doc
+    .moveTo(56, 90)
+    .lineTo(pageWidth - 56, 90)
+    .lineWidth(2)
+    .strokeColor(violet)
+    .stroke();
+  doc.y = 106;
+
+  if (title) {
+    doc.fillColor(ink).font('Helvetica-Bold').fontSize(15).text(title, { width: contentWidth });
+    doc.moveDown(0.5);
+  }
+
+  const writeInline = (line: string, baseSize: number, indent = 0) => {
+    const parts = inlineSegments(line);
+    const width = contentWidth - indent;
+    doc.fillColor(ink).fontSize(baseSize);
+    parts.forEach((part, index) => {
+      const last = index === parts.length - 1;
+      doc
+        .font(part.code ? 'Courier' : part.bold ? 'Helvetica-Bold' : 'Helvetica')
+        .fillColor(part.code ? '#5b21b6' : ink)
+        .text(part.text, indent ? 56 + indent : undefined, undefined, {
+          width,
+          continued: !last,
+          lineGap: 3,
+        });
+    });
+    if (!parts.length) doc.text('', { width });
+  };
+
+  const blocks = content.split(/```/);
+  blocks.forEach((block, blockIndex) => {
+    if (blockIndex % 2 === 1) {
+      const lines = block.split('\n');
+      const lang = /^[a-z]+$/i.test(lines[0].trim()) ? lines.shift()?.trim() : '';
+      const code = (lang ? lines.join('\n') : block).replace(/\n+$/, '');
+      if (!code.trim()) return;
+      const fontSize = 9;
+      doc.font('Courier').fontSize(fontSize);
+      const textHeight = doc.heightOfString(code, { width: contentWidth - 20 }) + 16;
+      if (doc.y + textHeight > doc.page.height - 60) doc.addPage();
+      const top = doc.y;
+      doc
+        .rect(56, top, contentWidth, textHeight)
+        .lineWidth(1)
+        .fillAndStroke('#f5f3ff', '#ddd6fe');
+      if (lang) {
+        doc.fillColor(violet).font('Helvetica-Bold').fontSize(7.5).text(lang.toUpperCase(), 66, top + 6, {
+          width: contentWidth - 20,
+        });
+      }
+      doc
+        .fillColor('#101014')
+        .font('Courier')
+        .fontSize(fontSize)
+        .text(code, 66, top + (lang ? 16 : 8), { width: contentWidth - 20 });
+      doc.y = top + textHeight + 8;
+      return;
+    }
+    for (const raw of block.split('\n')) {
+      const line = raw.replace(/\s+$/, '');
+      const heading = line.match(/^(#{1,3})\s+(.*)$/);
+      const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+      const numbered = line.match(/^\s*(\d+)\.\s+(.*)$/);
+      if (!line.trim()) {
+        doc.moveDown(0.4);
+        continue;
+      }
+      if (heading) {
+        const level = heading[1].length;
+        doc.moveDown(0.6);
+        doc
+          .fillColor(level === 1 ? violet : ink)
+          .font('Helvetica-Bold')
+          .fontSize(level === 1 ? 15 : level === 2 ? 12.5 : 11.5)
+          .text(heading[2], { width: contentWidth, lineGap: 2 });
+        doc.moveDown(0.35);
+        continue;
+      }
+      if (bullet) {
+        doc.fillColor(violet).font('Helvetica-Bold').fontSize(10.5).text('•', 56, undefined, {
+          width: 12,
+          continued: true,
+        });
+        writeInline(bullet[1], 10.5, 14);
+        continue;
+      }
+      if (numbered) {
+        doc
+          .fillColor(violet)
+          .font('Helvetica-Bold')
+          .fontSize(10.5)
+          .text(`${numbered[1]}.`, 56, undefined, { width: 20, continued: true });
+        writeInline(numbered[2], 10.5, 20);
+        continue;
+      }
+      writeInline(line, 10.5);
+      doc.moveDown(0.15);
+    }
+  });
+
+  doc.end();
+  return finished;
+}
+
+router.post('/pdf', async (req: AuthRequest, res) => {
+  const content = String(req.body?.content || '').trim();
+  const title = String(req.body?.title || '').trim().slice(0, 120);
+  if (!content) return res.status(400).json({ message: 'Nada para exportar.' });
+  if (content.length > 200000)
+    return res.status(400).json({ message: 'Conteúdo muito extenso para gerar PDF.' });
+  try {
+    const buffer = await renderPdf(content, title);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="lumi-resposta.pdf"');
+    res.send(buffer);
+  } catch {
+    res.status(500).json({ message: 'Não foi possível gerar o PDF.' });
   }
 });
 

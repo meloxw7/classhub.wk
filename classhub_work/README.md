@@ -123,7 +123,7 @@ Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 - Sugestões rápidas iniciais (explique um tópico, plano de estudos, simule uma prova, revise um texto)
 - Botão **parar geração** durante o streaming e **copiar resposta** ao final
 - **Anexos**: envie até 3 arquivos por mensagem (.pdf, .png, .jpg, .txt, .md — até 10 MB cada; .docx é lido como texto) — PDFs e imagens vão direto ao Gemini (multimodal), textos são anexados ao prompt
-- **Exportar PDF**: qualquer resposta abre uma janela de impressão formatada (margem A4, cabeçalho ClassHub, listas e código estilizados) — "Salvar como PDF" do navegador gera o documento
+- **Exportar PDF (arquivo real)**: qualquer resposta gera um **.pdf baixável** via `POST /api/tutor/pdf` (pdfkit) — cabeçalho ClassHub/Lumi, títulos, listas, negrito, código inline e blocos de código formatados, com quebra de páginas
 - Histórico apenas na sessão (não persiste); sem dependências novas (REST + SSE via `fetch`)
 - Configuração: `AI_API_KEY` (Google Gemini, gere em aistudio.google.com) + `AI_MODEL` (padrão `gemini-3.8-flash`) + `TUTOR_NAME` (padrão `Lumi`) no `.env` do backend; sem chave, a rota responde 503
 - A chave **nunca** vai ao frontend — o backend faz o proxy server-side
@@ -228,7 +228,7 @@ Criadas pelo `seed.sql` para testes locais — em produção, use o cadastro sel
 | Estatísticas  | `GET /api/stats` |
 | Busca         | `GET /api/search?q=` (materiais, eventos, fórum, avisos — respeita visibilidade) |
 | CSV           | `GET /api/grades/export` (boletim da turma, professor) |
-| Lumi (IA)     | `POST /api/tutor/chat` (streaming SSE; requer `AI_API_KEY`) |
+| Lumi (IA)     | `POST /api/tutor/chat` (streaming SSE; requer `AI_API_KEY`), `POST /api/tutor/pdf` (PDF real da resposta) |
 | Health        | `GET /api/health` |
 | Docs          | `GET /api/docs` (Swagger UI), `GET /api/docs/openapi.json` (spec OpenAPI 3.0) |
 
@@ -242,7 +242,7 @@ Backend e frontend usam **Vitest**. Os testes do backend são de dois tipos:
 Cada teste de integração cria os próprios dados em uma disciplina sandbox e limpa tudo ao final (delete em cascata + revogação dos refresh tokens criados); os testes de senha/avatar **restauram o estado original** das contas demo.
 
 ```bash
-cd backend   && npm test              # 76 testes (unit + integração)
+cd backend   && npm test              # 78 testes (unit + integração)
 cd frontend  && npm test              # 24 testes (colors, api/interceptor, Toast, ConfirmDialog)
 ```
 

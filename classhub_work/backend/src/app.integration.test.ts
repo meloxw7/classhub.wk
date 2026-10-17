@@ -319,4 +319,29 @@ describe.skipIf(!hasDb)('tutor IA', () => {
     expect(upstreamBody).toContain('nota.txt');
     expect(upstreamBody).toContain('conteúdo da nota de estudo');
   });
+
+  it('gera um PDF real (arquivo baixável) de uma resposta', async () => {
+    const res = await request(app)
+      .post('/api/tutor/pdf')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .send({
+        title: 'Plano de estudos',
+        content:
+          '# Plano de estudos\n\nFoco em **Banco de Dados**.\n\n- Revisar normalização\n- Praticar `JOIN`\n\n1. Segunda: leitura\n2. Terça: exercícios\n\n```sql\nSELECT * FROM users;\n```\n',
+      });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['content-disposition']).toContain('lumi-resposta.pdf');
+    expect(Buffer.isBuffer(res.body)).toBe(true);
+    expect(res.body.slice(0, 4).toString()).toBe('%PDF');
+    expect(res.body.length).toBeGreaterThan(1000);
+  });
+
+  it('recusa PDF sem conteúdo (400)', async () => {
+    const res = await request(app)
+      .post('/api/tutor/pdf')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .send({ content: '   ' });
+    expect(res.status).toBe(400);
+  });
 });
