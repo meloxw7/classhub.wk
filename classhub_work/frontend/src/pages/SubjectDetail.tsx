@@ -142,7 +142,7 @@ export default function SubjectDetail() {
               <b>{progress}%</b>
             </div>
 
-            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div
                 className={`h-full ${progressTone(progress)} rounded-full transition-all`}
                 style={{ width: `${progress}%` }}
@@ -167,7 +167,7 @@ export default function SubjectDetail() {
 
           <div className="space-y-3 max-h-[26rem] overflow-y-auto pr-1">
             {materials.map((material) => (
-              <div className="rounded-xl border border-slate-200 p-4" key={material.id}>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4" key={material.id}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="chip">{material.type}</span>
 
@@ -232,7 +232,7 @@ export default function SubjectDetail() {
           <div className="space-y-3 max-h-[26rem] overflow-y-auto pr-1">
             {events.map((event) => (
               <div
-                className="rounded-xl border border-slate-200 p-4"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 p-4"
                 key={event.id}
                 style={{
                   borderLeft: `4px solid ${eventColor(event)}`,

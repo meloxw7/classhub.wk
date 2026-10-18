@@ -307,7 +307,7 @@ export default function Chat() {
 
       <div className="grid lg:grid-cols-4 gap-4 items-start">
         <div className="lg:col-span-3 card p-0 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
               <h3 className="font-bold">{subject?.name || 'Selecione a disciplina'}</h3>
 
@@ -351,7 +351,7 @@ export default function Chat() {
                       className={`rounded-2xl px-4 py-2 max-w-[75%] ${
                         mine
                           ? 'bg-violet-600 text-white rounded-br-sm'
-                          : 'bg-white border border-slate-200 rounded-bl-sm'
+                          : 'bg-white dark:bg-[#1b1b24] border border-slate-200 dark:border-slate-700 rounded-bl-sm'
                       }`}
                     >
                       {!mine && (
@@ -382,7 +382,7 @@ export default function Chat() {
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-200 flex gap-2">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex gap-2">
             <input
               className="input"
               placeholder="Escreva uma mensagem..."

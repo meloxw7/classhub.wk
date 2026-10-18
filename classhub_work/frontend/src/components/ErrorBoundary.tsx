@@ -30,7 +30,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
             <p className="muted mt-2">Ocorreu um erro inesperado nesta tela.</p>
 
-            <pre className="mt-4 p-3 rounded-xl bg-slate-100 text-xs text-left text-red-700 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
+            <pre className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-left text-red-700 dark:text-red-300 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
               {this.state.error.message}
             </pre>
 

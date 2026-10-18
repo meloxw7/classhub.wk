@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse shimmer bg-slate-100 rounded-xl ${className}`} />;
+  return <div className={`animate-pulse shimmer bg-slate-100 dark:bg-slate-800/70 rounded-xl ${className}`} />;
 }
 
 export function SkeletonCard() {

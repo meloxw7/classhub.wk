@@ -141,7 +141,7 @@ export default function NotificationsMenu({ unread }: { unread: number }) {
 
       {open && (
         <div className="pop-in origin-in-top card absolute right-0 mt-2 w-[22rem] max-w-[calc(100vw-2rem)] z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
             <b className="text-sm">Notificações</b>
 
             {items.length > 0 && (
@@ -221,7 +221,7 @@ export default function NotificationsMenu({ unread }: { unread: number }) {
             )}
           </div>
 
-          <div className="px-4 py-3 border-t border-slate-200">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800">
             <NavLink
               to="/notificacoes"
               onClick={() => setOpen(false)}

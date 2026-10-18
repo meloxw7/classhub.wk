@@ -263,7 +263,9 @@ export default function Dashboard() {
               <div className="card p-5" key={card.label}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500">{card.label}</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      {card.label}
+                    </p>
 
                     <p
                       className={`text-3xl font-black mt-2 tabular-nums ${
@@ -299,7 +301,7 @@ export default function Dashboard() {
                 {overdue.map((a) => (
                   <div
                     key={a.id}
-                    className="flex justify-between items-center bg-white rounded-xl px-4 py-2.5 border border-red-100"
+                    className="flex justify-between items-center bg-white dark:bg-[#1b1b24] rounded-xl px-4 py-2.5 border border-red-100 dark:border-red-900/60"
                   >
                     <p className="font-semibold text-sm text-slate-800">
                       {a.title}
@@ -354,7 +356,7 @@ export default function Dashboard() {
                 const u = urgency(a.due_date);
 
                 return (
-                  <div key={a.id} className="rounded-xl border border-slate-200 p-4">
+                  <div key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
                     <div className="flex justify-between items-start gap-3">
                       <div className="min-w-0">
                         <p className="font-bold truncate">{a.title}</p>
@@ -452,15 +454,17 @@ export default function Dashboard() {
                 provas.slice(0, 4).map((e) => (
                   <div
                     key={e.id}
-                    className="flex justify-between items-center rounded-xl bg-violet-50 border border-violet-100 px-4 py-3"
+                    className="flex justify-between items-center rounded-xl bg-violet-50 border border-violet-100 dark:bg-violet-950/40 dark:border-violet-900 px-4 py-3"
                   >
                     <div>
                       <p className="font-semibold text-sm">{e.title}</p>
 
-                      <p className="text-xs text-slate-500">{e.subject_name || 'Geral'}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {e.subject_name || 'Geral'}
+                      </p>
                     </div>
 
-                    <span className="text-xs font-bold text-violet-700 shrink-0">
+                    <span className="text-xs font-bold text-violet-700 dark:text-violet-300 shrink-0">
                       {new Date(e.event_date).toLocaleDateString('pt-BR', {
                         day: '2-digit',
                         month: 'short',
@@ -478,7 +482,7 @@ export default function Dashboard() {
       </div>
 
       {loading && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 text-sm text-slate-600 z-50">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-[#14141a] dark:text-slate-200 shadow-lg rounded-full px-4 py-2 flex items-center gap-2 text-sm text-slate-600 z-50">
           <Loader2 size={15} className="animate-spin" />
           Carregando...
         </div>

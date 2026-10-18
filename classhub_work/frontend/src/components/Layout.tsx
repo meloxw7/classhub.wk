@@ -207,7 +207,7 @@ export default function Layout() {
         </button>
       </aside>
       <main className="md:ml-72 min-h-screen">
-        <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 md:px-8 py-4 flex items-center gap-4">
+        <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 dark:border-slate-800 px-4 md:px-8 py-4 flex items-center gap-4">
           <button className="md:hidden" onClick={() => setOpen(true)}>
             <Menu />
           </button>
@@ -251,7 +251,7 @@ export default function Layout() {
         </section>
       </main>
       {/* TAB BAR MOBILE */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0e0e14]/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 flex">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0e0e14]/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 dark:border-slate-800 flex">
         {(
           [
             ['/', 'Início', LayoutDashboard, false],

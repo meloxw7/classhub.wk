@@ -927,7 +927,7 @@ export default function Abnt() {
                 rlist.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-slate-200 p-4 flex justify-between gap-3"
+                    className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex justify-between gap-3"
                   >
                     <div className="min-w-0">
                       <span className="chip">{REF_LABELS[item.type] || item.type}</span>

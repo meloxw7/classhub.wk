@@ -907,7 +907,7 @@ export function Agenda() {
             {!loading &&
               dayEvents.map((event) => (
                 <div
-                  className="rounded-xl border border-slate-200 p-4"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 p-4"
                   key={event.id}
                   style={{
                     borderLeft: `4px solid ${eventColor(event)}`,
@@ -1045,7 +1045,7 @@ export function Agenda() {
         )}
 
         {user?.role === 'PROFESSOR' && form.visibility === 'SELECTED' && (
-          <div className="mt-2 rounded-xl border border-slate-200 p-3 max-h-44 overflow-y-auto">
+          <div className="mt-2 rounded-xl border border-slate-200 dark:border-slate-800 p-3 max-h-44 overflow-y-auto">
             <p className="text-xs font-semibold text-slate-500 mb-2">Alunos destinatários</p>
 
             {students.map((student) => (
@@ -1329,7 +1329,7 @@ export function Assignments() {
                   )}
 
                   {assignment.feedback && (
-                    <div className="mt-3 rounded-xl bg-violet-50 p-3 text-sm">
+                    <div className="mt-3 rounded-xl bg-violet-50 dark:bg-violet-950/40 p-3 text-sm">
                       {assignment.feedback}
                     </div>
                   )}
@@ -1710,7 +1710,7 @@ export function Forum() {
                   <div
                     key={response.id}
                     className={`rounded-xl p-3 ${
-                      response.official ? 'bg-violet-50 border border-violet-100' : 'bg-slate-50'
+                      response.official ? 'bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900' : 'bg-slate-50 dark:bg-slate-800/60'
                     }`}
                   >
                     <p className="text-sm">{response.content}</p>
