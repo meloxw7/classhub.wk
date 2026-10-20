@@ -7,9 +7,10 @@ import {
   FileText,
   Plus,
   Send,
+  Share2,
   Upload,
+  X,
   CalendarPlus,
-  MessageCircle,
   ClipboardCheck,
   Loader2,
   Trash2,
@@ -245,6 +246,9 @@ export function Materials() {
   });
 
   const [file, setFile] = useState<File | null>(null);
+  const [shareMaterial, setShareMaterial] = useState<any>(null);
+  const [shareComment, setShareComment] = useState('');
+  const [sharing, setSharing] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -357,6 +361,24 @@ export function Materials() {
     }
   }
 
+  async function submitShare() {
+    if (!shareMaterial) return;
+    setSharing(true);
+    try {
+      await api.post('/social/posts', {
+        content: shareComment.trim(),
+        materialId: shareMaterial.id,
+      });
+      toast.success('Compartilhado na comunidade!');
+      setShareMaterial(null);
+      setShareComment('');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Não foi possível compartilhar.');
+    } finally {
+      setSharing(false);
+    }
+  }
+
   return (
     <Shell title="Materiais" desc="Vídeos, PDFs, links e exercícios com tags, versões e progresso.">
       <div className="card p-4 mb-5 grid md:grid-cols-3 gap-3">
@@ -446,9 +468,19 @@ export function Materials() {
                 </a>
               )}
 
+              <button
+                className="btn-secondary w-full mt-4 !py-2 text-xs"
+                onClick={() => {
+                  setShareMaterial(material);
+                  setShareComment('');
+                }}
+              >
+                <Share2 size={14} /> Compartilhar na comunidade
+              </button>
+
               {user?.role === 'ALUNO' && (
                 <button
-                  className={`w-full mt-4 ${material.completed ? 'btn-secondary' : 'btn-primary'}`}
+                  className={`w-full mt-2 ${material.completed ? 'btn-secondary' : 'btn-primary'}`}
                   onClick={() => toggle(material)}
                 >
                   {material.completed ? (
@@ -601,6 +633,55 @@ export function Materials() {
           </div>
         )}
       </div>
+
+      {shareMaterial && (
+        <div
+          className="backdrop-in fixed inset-0 z-[80] bg-slate-950/30 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShareMaterial(null)}
+        >
+          <div
+            className="pop-in w-full max-w-md bg-white dark:bg-[#14141a] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
+              <h4 className="font-bold">Compartilhar na comunidade</h4>
+              <button
+                onClick={() => setShareMaterial(null)}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                aria-label="Fechar"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5">
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">
+                Material
+              </p>
+              <p className="text-sm font-semibold truncate mb-3">{shareMaterial.title}</p>
+              <label className="label">Comentário (opcional)</label>
+              <textarea
+                className="input resize-none mb-3"
+                rows={3}
+                maxLength={500}
+                placeholder="Ex.: esse material me ajudou muito na prova!"
+                value={shareComment}
+                onChange={(e) => setShareComment(e.target.value)}
+              />
+              <button onClick={submitShare} disabled={sharing} className="btn-primary w-full">
+                {sharing ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Compartilhando...
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={16} /> Compartilhar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }
@@ -1546,218 +1627,6 @@ export function Assignments() {
           </div>
         </div>
       )}
-    </Shell>
-  );
-}
-
-/* =========================================================
-   FÓRUM
-========================================================= */
-
-export function Forum() {
-  const toast = useToast();
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [sendingReply, setSendingReply] = useState<string | null>(null);
-  const [materials, setMaterials] = useState<any[]>([]);
-  const [materialId, setMaterialId] = useState('');
-  const [question, setQuestion] = useState('');
-  const [reply, setReply] = useState<Record<string, string>>({});
-
-  async function load() {
-    try {
-      const response = await api.get('/forum');
-      setItems(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar fórum:', error);
-      toast.error('Não foi possível carregar o fórum.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    async function initialize() {
-      await load();
-
-      try {
-        const response = await api.get('/materials');
-
-        setMaterials(response.data);
-
-        if (response.data[0]) {
-          setMaterialId(response.data[0].id);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar materiais:', error);
-      }
-    }
-
-    initialize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- carrega uma vez ao montar
-  }, []);
-
-  async function ask() {
-    if (!question.trim()) return;
-
-    if (!materialId) {
-      toast.error('Selecione um material.');
-      return;
-    }
-
-    setSending(true);
-
-    try {
-      await api.post('/forum', {
-        materialId,
-        question,
-      });
-
-      setQuestion('');
-
-      await load();
-      toast.success('Dúvida publicada.');
-    } catch (error) {
-      console.error('Erro ao publicar dúvida:', error);
-      toast.error('Não foi possível publicar a dúvida.');
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function answer(id: string) {
-    if (!reply[id]?.trim()) return;
-
-    setSendingReply(id);
-
-    try {
-      await api.post(`/forum/${id}/replies`, {
-        content: reply[id],
-      });
-
-      setReply({
-        ...reply,
-        [id]: '',
-      });
-
-      await load();
-    } catch (error) {
-      console.error('Erro ao responder:', error);
-      toast.error('Não foi possível enviar a resposta.');
-    } finally {
-      setSendingReply(null);
-    }
-  }
-
-  return (
-    <Shell
-      title="Fórum de dúvidas"
-      desc="Perguntas por material com respostas oficiais dos professores."
-    >
-      <div className="card p-5 mb-5">
-        <select
-          className="input mb-3"
-          value={materialId}
-          onChange={(e) => setMaterialId(e.target.value)}
-        >
-          {materials.map((material) => (
-            <option key={material.id} value={material.id}>
-              {material.title}
-            </option>
-          ))}
-        </select>
-
-        <textarea
-          className="input mb-3"
-          placeholder="Digite sua dúvida..."
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-        />
-
-        <button onClick={ask} className="btn-primary" disabled={sending}>
-          {sending ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Publicando...
-            </>
-          ) : (
-            <>
-              <Send size={16} />
-              Publicar dúvida
-            </>
-          )}
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {loading &&
-          Array.from({ length: 2 }).map((_, index) => (
-            <Skeleton key={index} className="h-32 w-full" />
-          ))}
-
-        {!loading &&
-          items.map((item) => (
-            <div className="card p-5" key={item.id}>
-              <p className="text-xs text-violet-600 font-bold">
-                {item.material_title} • {item.author_name || 'Usuário'}
-              </p>
-
-              <h3 className="font-bold mt-2">{item.question}</h3>
-
-              <div className="mt-4 space-y-2">
-                {(item.replies || []).map((response: any) => (
-                  <div
-                    key={response.id}
-                    className={`rounded-xl p-3 ${
-                      response.official ? 'bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900' : 'bg-slate-50 dark:bg-slate-800/60'
-                    }`}
-                  >
-                    <p className="text-sm">{response.content}</p>
-
-                    <p className="text-xs text-slate-400 mt-1">
-                      {response.author_name} {response.official && '• Resposta oficial'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <input
-                  className="input"
-                  placeholder="Responder"
-                  value={reply[item.id] || ''}
-                  onChange={(e) =>
-                    setReply({
-                      ...reply,
-                      [item.id]: e.target.value,
-                    })
-                  }
-                />
-
-                <button
-                  className="btn-primary"
-                  onClick={() => answer(item.id)}
-                  disabled={sendingReply === item.id}
-                >
-                  {sendingReply === item.id ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <MessageCircle size={16} />
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-
-        {!loading && !items.length && (
-          <EmptyState
-            icon={MessageCircle}
-            title="Nenhuma dúvida ainda"
-            text="Seja o primeiro a perguntar sobre um material."
-          />
-        )}
-      </div>
     </Shell>
   );
 }

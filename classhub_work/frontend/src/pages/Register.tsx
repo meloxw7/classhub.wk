@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { GraduationCap, Loader2, ShieldCheck, UserRound, Building2, Mail, Lock, BookOpen, IdCard, CalendarDays } from 'lucide-react';
+import { GraduationCap, Loader2, ShieldCheck, UserRound, Building2, Mail, Lock, BookOpen, IdCard, CalendarDays, AtSign } from 'lucide-react';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 
@@ -8,6 +8,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
@@ -43,6 +44,7 @@ export default function Register() {
         email,
         password,
         role,
+        username: username.trim() || undefined,
         course: role === 'ALUNO' ? course : undefined,
         semester: role === 'ALUNO' ? semester : undefined,
         ra: role === 'ALUNO' ? ra : undefined,
@@ -191,7 +193,19 @@ export default function Register() {
                   onChange={(e) => setCourse(e.target.value)}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
+          <label className="label">Usuário (@) — opcional, geramos um se deixar vazio</label>
+          <div className="relative mb-4">
+            <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
+            <input
+              className="input pl-10"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              maxLength={20}
+              placeholder="ex.: joao_silva"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
                   <label className="label">Semestre/Período</label>
                   <div className="relative">

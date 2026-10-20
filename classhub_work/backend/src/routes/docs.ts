@@ -25,8 +25,10 @@ const spec = {
     { name: 'Usuários' },
     { name: 'Avisos' },
     { name: 'Trabalhos' },
-    { name: 'Fórum' },
     { name: 'Salas' },
+    { name: 'Comunidade' },
+    { name: 'Mensagens diretas' },
+    { name: 'Flashcards' },
     { name: 'Notificações' },
     { name: 'Progresso' },
     { name: 'Estatísticas' },
@@ -191,13 +193,6 @@ const spec = {
     '/api/assignments/submissions/{id}': {
       patch: { tags: ['Trabalhos'], summary: 'Corrige entrega com nota + feedback (professor)' },
     },
-    '/api/forum': {
-      get: { tags: ['Fórum'], summary: 'Lista perguntas' },
-      post: { tags: ['Fórum'], summary: 'Cria pergunta vinculada a um material' },
-    },
-    '/api/forum/{id}/replies': {
-      post: { tags: ['Fórum'], summary: 'Responde pergunta (professor ganha selo oficial)' },
-    },
     '/api/rooms': {
       get: { tags: ['Salas'], summary: 'Lista salas de estudo' },
       post: { tags: ['Salas'], summary: 'Cria sala (aluno ou professor)' },
@@ -205,6 +200,46 @@ const spec = {
     '/api/rooms/{id}/posts': {
       get: { tags: ['Salas'], summary: 'Publicações da sala' },
       post: { tags: ['Salas'], summary: 'Publica na sala (texto + link opcional)' },
+    },
+    '/api/social/feed': {
+      get: { tags: ['Comunidade'], summary: 'Feed: publicações próprias + de quem segue' },
+    },
+    '/api/social/posts': {
+      post: {
+        tags: ['Comunidade'],
+        summary: 'Publica texto ou enquete (pollOptions: 2–5 opções)',
+      },
+    },
+    '/api/social/posts/{id}/vote': {
+      post: { tags: ['Comunidade'], summary: 'Vota/altera voto em enquete' },
+    },
+    '/api/social/users/{id}': {
+      get: { tags: ['Comunidade'], summary: 'Perfil público + badges acadêmicos' },
+    },
+    '/api/social/users/{id}/follow': {
+      post: { tags: ['Comunidade'], summary: 'Segue/deixa de seguir' },
+    },
+    '/api/direct/conversations': {
+      get: { tags: ['Mensagens diretas'], summary: 'Lista conversas com última msg e não lidas' },
+    },
+    '/api/direct/{partnerId}': {
+      get: { tags: ['Mensagens diretas'], summary: 'Histórico com usuário e marca como lido' },
+    },
+    '/api/direct/upload': {
+      post: { tags: ['Mensagens diretas'], summary: 'Envia imagem/áudio na conversa (multipart)' },
+    },
+    '/api/flashcards': {
+      get: { tags: ['Flashcards'], summary: 'Lista cartões do usuário (filtro por disciplina)' },
+      post: { tags: ['Flashcards'], summary: 'Cria cartão (frente/verso, disciplina opcional)' },
+    },
+    '/api/flashcards/due': {
+      get: { tags: ['Flashcards'], summary: 'Fila de revisão vencida' },
+    },
+    '/api/flashcards/stats': {
+      get: { tags: ['Flashcards'], summary: 'Totais, vencidos e distribuição por caixa' },
+    },
+    '/api/flashcards/{id}/review': {
+      post: { tags: ['Flashcards'], summary: 'Revisa cartão (GOOD sobe caixa, AGAIN volta à 1)' },
     },
     '/api/notifications': {
       get: { tags: ['Notificações'], summary: 'Lista notificações do usuário' },

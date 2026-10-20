@@ -15,7 +15,9 @@ import {
   UserRound,
   Bell,
   Users,
-  MessageSquare,
+  AtSign,
+  Mail,
+  Layers,
 } from 'lucide-react';
 import { api } from '../lib/api';
 
@@ -35,7 +37,9 @@ const PAGES: Item[] = [
   { id: 'p-agenda', label: 'Agenda', hint: 'Página', to: '/agenda', icon: CalendarDays },
   { id: 'p-trab', label: 'Trabalhos', hint: 'Página', to: '/trabalhos', icon: ClipboardList },
   { id: 'p-boletim', label: 'Boletim', hint: 'Página', to: '/boletim', icon: GraduationCap },
-  { id: 'p-forum', label: 'Fórum', hint: 'Página', to: '/forum', icon: MessageSquare },
+  { id: 'p-social', label: 'Comunidade', hint: 'Página', to: '/social', icon: AtSign },
+  { id: 'p-mensagens', label: 'Mensagens', hint: 'Página', to: '/mensagens', icon: Mail },
+  { id: 'p-flashcards', label: 'Flashcards', hint: 'Página', to: '/flashcards', icon: Layers },
   { id: 'p-salas', label: 'Salas de estudo', hint: 'Página', to: '/salas', icon: Users },
   { id: 'p-chat', label: 'Chat da turma', hint: 'Página', to: '/chat', icon: MessagesSquare },
   { id: 'p-abnt', label: 'Conversor ABNT', hint: 'Página', to: '/abnt', icon: BookMarked },
@@ -129,8 +133,7 @@ export default function CommandPalette() {
       filtered.push(
         ...map(results.materials, 'm', FileText, (x) => `/disciplinas/${x.subject_id}`, 'Material'),
         ...map(results.events, 'e', CalendarDays, () => '/agenda', 'Evento'),
-        ...map(results.notices, 'n', Bell, () => '/disciplinas', 'Aviso'),
-        ...map(results.forum, 'f', MessageSquare, () => '/forum', 'Fórum')
+        ...map(results.notices, 'n', Bell, () => '/disciplinas', 'Aviso')
       );
     }
     return filtered.slice(0, 12);

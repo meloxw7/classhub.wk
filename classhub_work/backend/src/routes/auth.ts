@@ -5,6 +5,7 @@ import { pool } from '../lib/db';
 import { getJwtSecret } from '../lib/env';
 import { generateToken, hashToken } from '../lib/tokens';
 import { sendMail } from '../lib/mailer';
+import { ensureUsernameSchema, uniqueUsername, USERNAME_RE } from '../lib/username';
 
 const router = Router();
 
@@ -43,7 +44,7 @@ router.post('/login', async (req, res) => {
   if (!email || !password)
     return res.status(400).json({ message: 'E-mail e senha são obrigatórios' });
   const r = await pool.query(
-    'SELECT id,name,email,password_hash,role,course,semester,ra,institution FROM users WHERE email=$1',
+    'SELECT id,name,username,email,password_hash,role,course,semester,ra,institution FROM users WHERE email=$1',
     [String(email).toLowerCase().trim()]
   );
   if (!r.rowCount || !(await bcrypt.compare(password, r.rows[0].password_hash)))
@@ -66,6 +67,9 @@ router.post('/register', async (req, res) => {
   const semester = body.semester ? String(body.semester).trim() : null;
   const ra = body.ra ? String(body.ra).trim() : null;
   const subjectName = body.subjectName ? String(body.subjectName).trim() : '';
+  const requestedUsername = body.username
+    ? String(body.username).toLowerCase().trim()
+    : '';
 
   if (!name || name.length < 2) return res.status(400).json({ message: 'Informe seu nome completo' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
@@ -74,6 +78,10 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres' });
   if (role !== 'ALUNO' && role !== 'PROFESSOR')
     return res.status(400).json({ message: 'Escolha o perfil (aluno ou professor)' });
+  if (requestedUsername && !USERNAME_RE.test(requestedUsername))
+    return res.status(400).json({
+      message: 'Usuário (@): 3 a 20 caracteres, apenas letras minúsculas, números e _',
+    });
 
   let institution: string | null = null;
   if (role === 'PROFESSOR') {
@@ -88,8 +96,14 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Informe o nome da disciplina que você leciona' });
   }
 
+  await ensureUsernameSchema();
   const exists = await pool.query('SELECT 1 FROM users WHERE email=$1', [email]);
   if (exists.rowCount) return res.status(409).json({ message: 'Este e-mail já está cadastrado' });
+  if (requestedUsername) {
+    const taken = await pool.query('SELECT 1 FROM users WHERE username=$1', [requestedUsername]);
+    if (taken.rowCount) return res.status(409).json({ message: 'Este @usuário já está em uso' });
+  }
+  const username = requestedUsername || (await uniqueUsername(name));
 
   const hash = await bcrypt.hash(password, 10);
   const client = await pool.connect();
@@ -97,10 +111,10 @@ router.post('/register', async (req, res) => {
   try {
     await client.query('BEGIN');
     const r = await client.query(
-      `INSERT INTO users(name,email,password_hash,role,course,semester,ra,institution)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING id,name,email,role,course,semester,ra,institution`,
-      [name, email, hash, role, course, semester, ra, institution]
+      `INSERT INTO users(name,email,password_hash,role,course,semester,ra,institution,username)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       RETURNING id,name,email,role,course,semester,ra,institution,username`,
+      [name, email, hash, role, course, semester, ra, institution, username]
     );
     u = r.rows[0];
     if (role === 'PROFESSOR') {

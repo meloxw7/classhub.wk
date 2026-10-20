@@ -4,6 +4,7 @@ export type User = {
   name: string;
   email: string;
   role: Role;
+  username?: string | null;
   avatar_path?: string | null;
   course?: string | null;
   semester?: string | null;

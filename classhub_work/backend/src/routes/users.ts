@@ -5,6 +5,7 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import { pool } from '../lib/db';
 import { auth, role, AuthRequest } from '../middleware/auth';
+import { ensureUsernameSchema, USERNAME_RE } from '../lib/username';
 const router = Router();
 router.use(auth);
 const AVATAR_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
@@ -26,21 +27,49 @@ router.get('/students', role('PROFESSOR'), async (_req, res) => {
   res.json(r.rows);
 });
 router.get('/me', async (req: AuthRequest, res) => {
+  await ensureUsernameSchema();
   const r = await pool.query(
-    'SELECT id,name,email,role,avatar_path,course,semester,ra,institution FROM users WHERE id=$1',
+    'SELECT id,name,username,email,role,avatar_path,course,semester,ra,institution,bio FROM users WHERE id=$1',
     [req.user!.id]
   );
   if (!r.rowCount) return res.status(404).json({ message: 'Usuário não encontrado' });
   res.json(r.rows[0]);
 });
 router.put('/me', async (req: AuthRequest, res) => {
-  const { name } = req.body || {};
-  if (!name || !String(name).trim()) return res.status(400).json({ message: 'Informe o nome' });
-  const r = await pool.query(
-    'UPDATE users SET name=$1 WHERE id=$2 RETURNING id,name,email,role,avatar_path',
-    [String(name).trim(), req.user!.id]
+  const body = req.body || {};
+  const name = String(body.name || '').trim();
+  const bio = body.bio === undefined ? undefined : String(body.bio).trim().slice(0, 300);
+  const username =
+    body.username === undefined ? undefined : String(body.username).toLowerCase().trim();
+  if (!name) return res.status(400).json({ message: 'Informe o nome' });
+  await ensureUsernameSchema();
+  if (username !== undefined) {
+    if (!USERNAME_RE.test(username))
+      return res.status(400).json({
+        message: 'Usuário (@): 3 a 20 caracteres, apenas letras minúsculas, números e _',
+      });
+    const taken = await pool.query('SELECT 1 FROM users WHERE username=$1 AND id<>$2', [
+      username,
+      req.user!.id,
+    ]);
+    if (taken.rowCount) return res.status(409).json({ message: 'Este @usuário já está em uso' });
+  }
+  const sets: string[] = ['name=$1'];
+  const values: any[] = [name];
+  if (bio !== undefined) {
+    values.push(bio || null);
+    sets.push(`bio=$${values.length}`);
+  }
+  if (username !== undefined) {
+    values.push(username);
+    sets.push(`username=$${values.length}`);
+  }
+  values.push(req.user!.id);
+  const updated = await pool.query(
+    `UPDATE users SET ${sets.join(', ')} WHERE id=$${values.length} RETURNING id,name,username,email,role,avatar_path,bio`,
+    values
   );
-  res.json(r.rows[0]);
+  res.json(updated.rows[0]);
 });
 router.put('/password', async (req: AuthRequest, res) => {
   const { currentPassword, newPassword } = req.body || {};

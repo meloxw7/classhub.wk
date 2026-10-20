@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, CalendarDays, FileText, MessageSquare, Search, SearchX } from 'lucide-react';
+import { Bell, CalendarDays, FileText, Search, SearchX } from 'lucide-react';
 import { api } from '../lib/api';
 
 type Results = {
@@ -13,11 +13,10 @@ type Results = {
     subject_id: string | null;
     subject_name: string | null;
   }[];
-  forum: { id: string; question: string; answered: boolean; material_title: string }[];
   notices: { id: string; title: string; pinned: boolean; created_at: string; subject_name: string | null }[];
 };
 
-const EMPTY: Results = { materials: [], events: [], forum: [], notices: [] };
+const EMPTY: Results = { materials: [], events: [], notices: [] };
 
 const typeLabels: Record<string, string> = {
   PROVA: 'Prova',
@@ -59,8 +58,7 @@ export default function SearchPage() {
     };
   }, [query]);
 
-  const total =
-    results.materials.length + results.events.length + results.forum.length + results.notices.length;
+  const total = results.materials.length + results.events.length + results.notices.length;
 
   return (
     <div>
@@ -136,30 +134,6 @@ export default function SearchPage() {
                         {typeLabels[e.type] || 'Evento'} ·{' '}
                         {new Date(e.event_date).toLocaleDateString('pt-BR')}
                         {e.subject_name ? ` · ${e.subject_name}` : ''}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {results.forum.length > 0 && (
-            <section className="card p-5">
-              <h3 className="font-bold mb-3 flex items-center gap-2">
-                <MessageSquare size={18} className="text-violet-600" /> Fórum
-              </h3>
-              <ul className="space-y-2">
-                {results.forum.map((f) => (
-                  <li key={f.id}>
-                    <Link
-                      to="/forum"
-                      className="block rounded-xl p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                    >
-                      <p className="font-semibold text-sm">{f.question}</p>
-                      <p className="muted text-xs mt-0.5">
-                        {f.material_title}
-                        {f.answered ? ' · respondida' : ' · aguardando resposta'}
                       </p>
                     </Link>
                   </li>

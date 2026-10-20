@@ -12,12 +12,14 @@ export default function Profile() {
 
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
   const [course, setCourse] = useState('');
   const [semester, setSemester] = useState('');
   const [ra, setRa] = useState('');
   const [institution, setInstitution] = useState('');
+  const [bio, setBio] = useState('');
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
 
   const [savingName, setSavingName] = useState(false);
@@ -39,12 +41,14 @@ export default function Profile() {
         const response = await api.get('/users/me');
 
         setName(response.data.name);
+        setUsername(response.data.username || '');
         setEmail(response.data.email);
         setRole(response.data.role);
         setCourse(response.data.course || '');
         setSemester(response.data.semester || '');
         setRa(response.data.ra || '');
         setInstitution(response.data.institution || '');
+        setBio(response.data.bio || '');
         setAvatarPath(response.data.avatar_path || null);
       } catch (error) {
         console.error('Erro ao carregar perfil:', error);
@@ -68,11 +72,13 @@ export default function Profile() {
     try {
       const response = await api.put('/users/me', {
         name: name.trim(),
+        bio: bio.trim(),
+        username: username.trim(),
       });
 
       updateUser({ name: response.data.name });
 
-      toast.success('Nome atualizado.');
+      toast.success('Dados atualizados.');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Não foi possível salvar o nome.');
     } finally {
@@ -226,9 +232,37 @@ export default function Profile() {
 
             <input className="input mb-4" value={name} onChange={(e) => setName(e.target.value)} />
 
+            <label className="label">Usuário (@) — usado nas menções da comunidade</label>
+
+            <div className="relative mb-4">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none font-semibold">
+                @
+              </span>
+              <input
+                className="input pl-8"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                maxLength={20}
+                placeholder="ex.: joao_silva"
+              />
+            </div>
+
             <label className="label">E-mail (identificador da conta)</label>
 
             <input className="input mb-4" value={email} disabled />
+
+            <label className="label">Bio (aparece no seu perfil da comunidade)</label>
+
+            <textarea
+              className="input resize-none mb-4"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={3}
+              maxLength={300}
+              placeholder="Ex.: Estudante de SI, apaixonado por bancos de dados…"
+            />
+
+            <p className="text-xs text-slate-400 mb-4">{bio.length}/300</p>
 
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck size={16} className="text-violet-600" />

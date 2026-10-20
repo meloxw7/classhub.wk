@@ -15,7 +15,6 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
   let subjectId = '';
   let materialId = '';
   let noticeId = '';
-  let questionId = '';
   let roomId = '';
   let assignmentId = '';
   let submissionId = '';
@@ -194,25 +193,6 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
     expect(list.body[0].id).toBe(noticeId);
   });
 
-  it('fórum: aluno pergunta; resposta do professor ganha selo oficial', async () => {
-    const q = await alu().post('/api/forum').send({
-      materialId,
-      question: '[QA] Como testar isso?',
-    });
-    expect(q.status).toBe(201);
-    questionId = q.body.id;
-    const reply = await prof().post(`/api/forum/${questionId}/replies`).send({
-      content: '[QA] Use o fluxo de testes.',
-    });
-    expect(reply.status).toBe(201);
-    expect(reply.body.official).toBe(true);
-    const list = await alu().get('/api/forum');
-    const found = list.body.find((x: any) => x.id === questionId);
-    expect(found.answered).toBe(true);
-    expect(found.replies.length).toBe(1);
-    expect(found.replies[0].official).toBe(true);
-  });
-
   it('salas: aluno cria sala de estudo e publica mensagem', async () => {
     const room = await alu().post('/api/rooms').send({
       subjectId,
@@ -351,11 +331,10 @@ describe.skipIf(!hasDb)('fluxos de negócio (banco real, sandbox próprio)', () 
     expect(res.body.materials.some((m: any) => m.id === materialId)).toBe(true);
     expect(res.body.events.length).toBeGreaterThan(0);
     expect(res.body.notices.some((n: any) => n.id === noticeId)).toBe(true);
-    expect(res.body.forum.some((f: any) => f.id === questionId)).toBe(true);
     const professorView = await prof().get('/api/search?q=' + encodeURIComponent('Revisão pessoal'));
     expect(professorView.body.events.length).toBe(0);
     const short = await alu().get('/api/search?q=a');
-    expect(short.body).toEqual({ materials: [], events: [], forum: [], notices: [] });
+    expect(short.body).toEqual({ materials: [], events: [], notices: [] });
   });
 
   it('CSV: exporta boletim (professor); aluno é bloqueado', async () => {

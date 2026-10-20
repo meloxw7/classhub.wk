@@ -12,13 +12,16 @@ import {
   Notes,
   Agenda,
   Assignments,
-  Forum,
   Rooms,
   Notifications,
   ProfessorPanel,
 } from './pages/Pages';
 import Abnt from './pages/Abnt';
 import Profile from './pages/Profile';
+import UserProfile from './pages/UserProfile';
+import Social from './pages/Social';
+import Messages from './pages/Messages';
+import Flashcards from './pages/Flashcards';
 import Chat from './pages/Chat';
 import Boletim from './pages/Boletim';
 import SearchPage from './pages/Search';
@@ -57,11 +60,15 @@ export default function App() {
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/trabalhos" element={<Assignments />} />
               <Route path="/boletim" element={<Boletim />} />
-              <Route path="/forum" element={<Forum />} />
               <Route path="/salas" element={<Rooms />} />
               <Route path="/abnt" element={<Abnt />} />
+              <Route path="/flashcards" element={<Flashcards />} />
               <Route path="/perfil" element={<Profile />} />
+              <Route path="/perfil/:id" element={<UserProfile />} />
+              <Route path="/social" element={<Social />} />
+              <Route path="/mensagens" element={<Messages />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/forum" element={<Navigate to="/social" replace />} />
               <Route path="/notificacoes" element={<Notifications />} />
               <Route
                 path="/professor"

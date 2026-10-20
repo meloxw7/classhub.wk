@@ -7,8 +7,8 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  Mail,
   Menu,
-  MessageSquare,
   MessagesSquare,
   NotebookPen,
   X,
@@ -20,6 +20,8 @@ import {
   Sun,
   Search as SearchIcon,
   Sparkles,
+  AtSign,
+  Layers,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { api, fileUrl } from '../lib/api';
@@ -70,7 +72,8 @@ export default function Layout() {
     [
       'Colaboração',
       [
-        ['/forum', 'Fórum', MessageSquare],
+        ['/social', 'Comunidade', AtSign],
+        ['/mensagens', 'Mensagens', Mail],
         ['/salas', 'Salas de estudo', Users],
         ['/chat', 'Chat da turma', MessagesSquare],
       ],
@@ -80,6 +83,7 @@ export default function Layout() {
       [
         ['/busca', 'Busca', SearchIcon],
         ['/tutor', 'Lumi', Sparkles],
+        ['/flashcards', 'Flashcards', Layers],
         ['/abnt', 'Conversor ABNT', BookMarked],
       ],
     ],

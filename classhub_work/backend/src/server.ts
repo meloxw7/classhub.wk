@@ -74,6 +74,7 @@ function chatPresence(room: string) {
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   let user: { id: string; name: string } | null = null;
   let joinedRoom = '';
+  let dmRoom = '';
   try {
     const url = new URL(req.url || '/', 'http://localhost');
     const payload = jwt.verify(url.searchParams.get('token') || '', getJwtSecret()) as any;
@@ -81,6 +82,9 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   } catch {
     ws.close(4001, 'Não autenticado');
     return;
+  }
+  function dmRoomKey(a: string, b: string) {
+    return 'dm:' + [a, b].sort().join(':');
   }
   ws.on('message', async (raw) => {
     let msg: any;
@@ -106,6 +110,97 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       chatRooms.get(joinedRoom)!.add({ ws, userId: user.id, name: user.name, avatar });
       ws.send(JSON.stringify({ type: 'joined', subjectId: room }));
       chatPresence(joinedRoom);
+      return;
+    }
+    if (msg?.type === 'dm-join' && user) {
+      const partnerId = String(msg.recipientId || '');
+      if (!partnerId) return;
+      const exists = await pool.query('SELECT 1 FROM users WHERE id=$1', [partnerId]);
+      if (!exists.rowCount) return;
+      if (dmRoom) chatLeave(ws, dmRoom);
+      dmRoom = dmRoomKey(user.id, partnerId);
+      if (!chatRooms.has(dmRoom)) chatRooms.set(dmRoom, new Set());
+      chatRooms.get(dmRoom)!.add({ ws, userId: user.id, name: user.name, avatar: null });
+      ws.send(JSON.stringify({ type: 'dm-joined', partnerId }));
+      return;
+    }
+    if (msg?.type === 'dm-typing' && user && dmRoom) {
+      chatBroadcast(
+        dmRoom,
+        JSON.stringify({
+          type: 'dm-typing',
+          userId: user.id,
+          userName: user.name,
+          typing: !!msg.typing,
+        }),
+        ws
+      );
+      return;
+    }
+    if (msg?.type === 'dm-message' && user && dmRoom) {
+      const content = String(msg.content || '').trim().slice(0, 2000);
+      const recipientId = String(msg.recipientId || '');
+      if (!content || !recipientId) return;
+      try {
+        const r = await pool.query(
+          "INSERT INTO direct_messages(sender_id,recipient_id,type,content) VALUES($1,$2,'TEXT',$3) RETURNING *",
+          [user.id, recipientId, content]
+        );
+        const m = r.rows[0];
+        chatBroadcast(
+          dmRoom,
+          JSON.stringify({
+            type: 'dm-message',
+            message: {
+              id: m.id,
+              senderId: m.sender_id,
+              recipientId: m.recipient_id,
+              type: m.type,
+              content: m.content,
+              filePath: m.file_path ? String(m.file_path).replace(/\\/g, '/') : null,
+              fileName: m.file_name,
+              durationMs: m.duration_ms,
+              readAt: m.read_at,
+              createdAt: m.created_at,
+            },
+          })
+        );
+      } catch (error) {
+        logger.error({ err: error }, 'Erro em mensagem direta');
+      }
+      return;
+    }
+    if (msg?.type === 'dm-file' && user && dmRoom) {
+      const messageId = String(msg.messageId || '');
+      if (!messageId) return;
+      try {
+        const r = await pool.query('SELECT * FROM direct_messages WHERE id=$1 AND sender_id=$2', [
+          messageId,
+          user.id,
+        ]);
+        if (!r.rowCount) return;
+        const m = r.rows[0];
+        chatBroadcast(
+          dmRoom,
+          JSON.stringify({
+            type: 'dm-message',
+            message: {
+              id: m.id,
+              senderId: m.sender_id,
+              recipientId: m.recipient_id,
+              type: m.type,
+              content: m.content,
+              filePath: m.file_path ? String(m.file_path).replace(/\\/g, '/') : null,
+              fileName: m.file_name,
+              durationMs: m.duration_ms,
+              readAt: m.read_at,
+              createdAt: m.created_at,
+            },
+          })
+        );
+      } catch (error) {
+        logger.error({ err: error }, 'Erro ao transmitir mídia de mensagem direta');
+      }
       return;
     }
     if (msg?.type === 'message' && user && joinedRoom) {
@@ -162,6 +257,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       chatLeave(ws, room);
       chatPresence(room);
     }
+    if (dmRoom) chatLeave(ws, dmRoom);
   });
   ws.on('error', () => {});
 });

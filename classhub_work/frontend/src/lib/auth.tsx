@@ -6,6 +6,7 @@ type RegisterData = {
   email: string;
   password: string;
   role: string;
+  username?: string;
   course?: string;
   semester?: string;
   ra?: string;
