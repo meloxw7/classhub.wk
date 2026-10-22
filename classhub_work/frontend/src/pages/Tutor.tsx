@@ -11,7 +11,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { apiBaseURL } from '../lib/api';
+import { apiBaseURL, refreshSession } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../components/Toast';
 
@@ -29,6 +29,16 @@ const SUGGESTIONS = [
 ];
 
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.txt,.md,.docx';
+
+async function authFetch(url: string, init: RequestInit): Promise<Response> {
+  const res = await fetch(url, init);
+  if (res.status !== 401) return res;
+  const token = await refreshSession();
+  if (!token) throw new Error('Sessão expirada. Entre novamente.');
+  const headers = new Headers(init.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  return fetch(url, { ...init, headers });
+}
 
 async function streamTutor(
   messages: Message[],
@@ -48,7 +58,7 @@ async function streamTutor(
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify({ messages });
   }
-  const res = await fetch(`${apiBaseURL}/tutor/chat`, { method: 'POST', headers, body, signal });
+  const res = await authFetch(`${apiBaseURL}/tutor/chat`, { method: 'POST', headers, body, signal });
   if (!res.ok) {
     const data = await res.json().catch(() => ({ message: '' }));
     throw new Error(data.message || 'Não foi possível falar com a Lumi.');
@@ -155,7 +165,7 @@ function boldParts(text: string): React.ReactNode {
 
 async function downloadPdf(content: string, title: string) {
   const token = localStorage.getItem('classhub_token');
-  const res = await fetch(`${apiBaseURL}/tutor/pdf`, {
+  const res = await authFetch(`${apiBaseURL}/tutor/pdf`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ content, title }),
