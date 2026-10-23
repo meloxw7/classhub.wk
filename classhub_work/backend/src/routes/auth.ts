@@ -94,6 +94,8 @@ router.post('/register', async (req, res) => {
     if (!institution) return res.status(403).json({ message: 'Código de instituição inválido' });
     if (!subjectName)
       return res.status(400).json({ message: 'Informe o nome da disciplina que você leciona' });
+  } else if (body.institution) {
+    institution = String(body.institution).trim().slice(0, 120) || null;
   }
 
   await ensureUsernameSchema();

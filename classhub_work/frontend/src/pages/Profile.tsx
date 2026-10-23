@@ -280,11 +280,16 @@ export default function Profile() {
               </div>
             )}
 
-            {role === 'ALUNO' && (course || semester || ra) && (
+            {role === 'ALUNO' && (course || semester || ra || institution) && (
               <div className="space-y-1 mb-4 text-sm text-slate-600">
                 {course && (
                   <p>
                     <span className="font-semibold">Curso:</span> {course}
+                  </p>
+                )}
+                {institution && (
+                  <p>
+                    <span className="font-semibold">Faculdade/Instituição:</span> {institution}
                   </p>
                 )}
                 {semester && (

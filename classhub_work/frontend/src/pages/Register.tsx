@@ -3,6 +3,10 @@ import { GraduationCap, Loader2, ShieldCheck, UserRound, Building2, Mail, BookOp
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import PasswordInput from '../components/PasswordInput';
+import SearchableSelect from '../components/SearchableSelect';
+import { FACULDADES_PE } from '../lib/institutions';
+
+const PERIODOS = ['1º período', '2º período', '3º período', '4º período', '5º período', '6º período'];
 
 export default function Register() {
   const { user, register } = useAuth();
@@ -14,6 +18,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
   const [course, setCourse] = useState('');
+  const [institution, setInstitution] = useState('');
   const [semester, setSemester] = useState('');
   const [ra, setRa] = useState('');
   const [institutionCode, setInstitutionCode] = useState('');
@@ -48,6 +53,7 @@ export default function Register() {
         username: username.trim() || undefined,
         course: role === 'ALUNO' ? course : undefined,
         semester: role === 'ALUNO' ? semester : undefined,
+        institution: role === 'ALUNO' ? institution.trim() || undefined : undefined,
         ra: role === 'ALUNO' ? ra : undefined,
         institutionCode: role === 'PROFESSOR' ? institutionCode : undefined,
         subjectName: role === 'PROFESSOR' ? subjectName : undefined,
@@ -175,15 +181,26 @@ export default function Register() {
 
           {role === 'ALUNO' ? (
             <>
-              <label className="label">Curso</label>
-              <div className="relative mb-4">
-                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
-                <input
-                  className="input pl-10"
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                />
-              </div>
+          <label className="label">Curso</label>
+          <div className="relative mb-4">
+            <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
+            <input
+              className="input pl-10"
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
+            />
+          </div>
+
+          <label className="label">Faculdade / Instituição</label>
+          <div className="relative mb-4">
+            <SearchableSelect
+              icon={Building2}
+              options={FACULDADES_PE}
+              value={institution}
+              onChange={setInstitution}
+              placeholder="Busque sua faculdade (ex.: UFPE)"
+            />
+          </div>
           <label className="label">Usuário (@) — opcional, geramos um se deixar vazio</label>
           <div className="relative mb-4">
             <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
@@ -199,14 +216,13 @@ export default function Register() {
           <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
                   <label className="label">Semestre/Período</label>
-                  <div className="relative">
-                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
-                    <input
-                      className="input pl-10"
-                      value={semester}
-                      onChange={(e) => setSemester(e.target.value)}
-                    />
-                  </div>
+                  <SearchableSelect
+                    icon={CalendarDays}
+                    options={PERIODOS}
+                    value={semester}
+                    onChange={setSemester}
+                    placeholder="Ex.: 1º período"
+                  />
                 </div>
                 <div>
                   <label className="label">Matrícula (RA)</label>

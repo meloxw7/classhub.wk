@@ -10,6 +10,7 @@ type RegisterData = {
   course?: string;
   semester?: string;
   ra?: string;
+  institution?: string;
   institutionCode?: string;
   subjectName?: string;
 };

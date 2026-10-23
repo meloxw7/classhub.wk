@@ -69,7 +69,7 @@ const spec = {
       post: {
         tags: ['Auth'],
         summary:
-          'Cadastro (aluno livre; professor exige código da instituição, que identifica a instituição automaticamente, e disciplina que leciona) → sessão automática',
+          'Cadastro (aluno livre, pode informar faculdade/instituição; professor exige código da instituição, que identifica a instituição automaticamente, e disciplina que leciona) → sessão automática',
         security: [],
         requestBody: {
           required: true,
@@ -86,6 +86,7 @@ const spec = {
                   course: { type: 'string' },
                   semester: { type: 'string' },
                   ra: { type: 'string' },
+                  institution: { type: 'string' },
                   institutionCode: { type: 'string' },
                   subjectName: { type: 'string' },
                 },

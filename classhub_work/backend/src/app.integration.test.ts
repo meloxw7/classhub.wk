@@ -104,6 +104,7 @@ describe.skipIf(!hasDb)('fluxo de autenticação (banco real)', () => {
       course: 'Análise e Desenvolvimento de Sistemas',
       semester: '26.2',
       ra: 'RA12345',
+      institution: 'Universidade Federal de Pernambuco (UFPE)',
     });
     expect(res.status).toBe(201);
     expect(typeof res.body.token).toBe('string');
@@ -114,6 +115,7 @@ describe.skipIf(!hasDb)('fluxo de autenticação (banco real)', () => {
       course: 'Análise e Desenvolvimento de Sistemas',
       semester: '26.2',
       ra: 'RA12345',
+      institution: 'Universidade Federal de Pernambuco (UFPE)',
     });
     createdHashes.push(hashToken(res.body.refreshToken));
     const login = await request(app)
