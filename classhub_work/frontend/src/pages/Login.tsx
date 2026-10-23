@@ -2,6 +2,7 @@ import { FormEvent, useState } from 'react';
 import { GraduationCap, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { Navigate, Link } from 'react-router-dom';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -75,16 +76,11 @@ export default function Login() {
             />
           </div>
           <label className="label">Senha</label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
-            <input
-              className="input pl-10"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          <PasswordInput
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
           <label className="flex items-center gap-2 mt-3 select-none cursor-pointer">
             <input
               type="checkbox"

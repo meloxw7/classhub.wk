@@ -1,7 +1,8 @@
 import { FormEvent, useState } from 'react';
-import { GraduationCap, Loader2, ShieldCheck, UserRound, Building2, Mail, Lock, BookOpen, IdCard, CalendarDays, AtSign } from 'lucide-react';
+import { GraduationCap, Loader2, ShieldCheck, UserRound, Building2, Mail, BookOpen, IdCard, CalendarDays, AtSign } from 'lucide-react';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Register() {
   const { user, register } = useAuth();
@@ -155,30 +156,20 @@ export default function Register() {
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
               <label className="label">Senha</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
-                <input
-                  className="input pl-10"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={6}
-                  required
-                />
-              </div>
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
             </div>
             <div>
               <label className="label">Confirmar senha</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
-                <input
-                  className="input pl-10"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
+              <PasswordInput
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
             </div>
           </div>
 
