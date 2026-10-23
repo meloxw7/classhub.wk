@@ -33,6 +33,9 @@ export default function Login() {
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-24 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl" />
         <div className="relative">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-lg shadow-violet-950/50 flex items-center justify-center mb-5">
+            <GraduationCap size={28} />
+          </div>
           <div className="text-4xl font-black">
             Class<span className="text-violet-400">Hub</span>
           </div>
@@ -40,23 +43,37 @@ export default function Login() {
             Portal acadêmico integrado para materiais, notas, prazos, trabalhos e colaboração.
           </p>
           <div className="mt-10 space-y-4 text-slate-300">
-            <p className="flex gap-3">
-              <GraduationCap /> Experiência separada para aluno e professor
+            <p className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-full bg-white/10 text-violet-300 flex items-center justify-center shrink-0">
+                <GraduationCap size={18} />
+              </span>
+              <span>Experiência separada para aluno e professor</span>
             </p>
-            <p className="flex gap-3">
-              <ShieldCheck /> Autenticação e permissões por perfil
+            <p className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-full bg-white/10 text-violet-300 flex items-center justify-center shrink-0">
+                <ShieldCheck size={18} />
+              </span>
+              <span>Autenticação e permissões por perfil</span>
             </p>
-            <p className="flex gap-3">
-              <Lock /> Conteúdos e anotações persistidos no PostgreSQL
+            <p className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-full bg-white/10 text-violet-300 flex items-center justify-center shrink-0">
+                <Lock size={18} />
+              </span>
+              <span>Conteúdos e anotações persistidos no PostgreSQL</span>
             </p>
           </div>
         </div>
       </div>
       <div className="bg-slate-50 flex items-center justify-center p-6">
-        <form onSubmit={submit} className="card w-full max-w-md p-7">
+        <form onSubmit={submit} className="card fade-rise w-full max-w-md p-7">
           <div className="mb-7">
-            <div className="lg:hidden text-3xl font-black mb-5">
-              Class<span className="text-violet-600">Hub</span>
+            <div className="lg:hidden flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white flex items-center justify-center shadow-md shadow-violet-200 shrink-0">
+                <GraduationCap size={22} />
+              </div>
+              <div className="text-2xl font-black">
+                Class<span className="text-violet-600">Hub</span>
+              </div>
             </div>
             <h1 className="text-2xl font-black">Entrar</h1>
             <p className="muted mt-1">Acesse seu ambiente acadêmico.</p>
@@ -81,24 +98,24 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <label className="flex items-center gap-2 mt-3 select-none cursor-pointer">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="w-4 h-4 accent-violet-600"
-            />
-            <span className="text-sm text-slate-600">Lembrar de mim (30 dias)</span>
-          </label>
-          <button disabled={loading} className="btn-primary w-full mt-5">
+          <div className="flex items-center justify-between gap-3 mt-4">
+            <label className="flex items-center gap-2 select-none cursor-pointer">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="w-4 h-4 accent-violet-600"
+              />
+              <span className="text-sm text-slate-600">Lembrar de mim (30 dias)</span>
+            </label>
+            <Link to="/resetar-senha" className="text-sm text-violet-600 font-semibold shrink-0">
+              Esqueci minha senha
+            </Link>
+          </div>
+          <button disabled={loading} className="btn-primary w-full mt-6">
             {loading ? <Loader2 size={18} className="animate-spin" /> : null}
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
-          <p className="text-right mt-3">
-            <Link to="/resetar-senha" className="text-sm text-violet-600 font-semibold">
-              Esqueci minha senha
-            </Link>
-          </p>
           <p className="text-center mt-4 text-sm text-slate-600">
             Não tem conta?{' '}
             <Link to="/cadastro" className="text-violet-600 font-semibold">

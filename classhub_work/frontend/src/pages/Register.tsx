@@ -72,6 +72,9 @@ export default function Register() {
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-24 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl" />
         <div className="relative">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-lg shadow-violet-950/50 flex items-center justify-center mb-5">
+            <GraduationCap size={28} />
+          </div>
           <div className="text-4xl font-black">
             Class<span className="text-violet-400">Hub</span>
           </div>
@@ -80,27 +83,38 @@ export default function Register() {
           </p>
           <div className="mt-10 space-y-4 text-slate-300">
             <p className="flex items-center gap-3">
-              <GraduationCap size={20} className="shrink-0" />
+              <span className="w-9 h-9 rounded-full bg-white/10 text-violet-300 flex items-center justify-center shrink-0">
+                <GraduationCap size={18} />
+              </span>
               <span>Alunos entram livremente com curso, período e RA</span>
             </p>
             <p className="flex items-center gap-3">
-              <Building2 size={20} className="shrink-0" />
+              <span className="w-9 h-9 rounded-full bg-white/10 text-violet-300 flex items-center justify-center shrink-0">
+                <Building2 size={18} />
+              </span>
               <span>
                 Professores entram com o código da instituição (identificada automaticamente)
               </span>
             </p>
             <p className="flex items-center gap-3">
-              <ShieldCheck size={20} className="shrink-0" />
+              <span className="w-9 h-9 rounded-full bg-white/10 text-violet-300 flex items-center justify-center shrink-0">
+                <ShieldCheck size={18} />
+              </span>
               <span>Sessão segura com JWT e renovação automática</span>
             </p>
           </div>
         </div>
       </div>
       <div className="bg-slate-50 flex items-center justify-center p-6">
-        <form onSubmit={submit} className="card w-full max-w-md p-7 my-8">
+        <form onSubmit={submit} className="card fade-rise w-full max-w-md p-7 my-8">
           <div className="mb-6">
-            <div className="lg:hidden text-3xl font-black mb-5">
-              Class<span className="text-violet-600">Hub</span>
+            <div className="lg:hidden flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white flex items-center justify-center shadow-md shadow-violet-200 shrink-0">
+                <GraduationCap size={22} />
+              </div>
+              <div className="text-2xl font-black">
+                Class<span className="text-violet-600">Hub</span>
+              </div>
             </div>
             <h1 className="text-2xl font-black">Criar conta</h1>
             <p className="muted mt-1">Responda o cadastro para entrar no ambiente acadêmico.</p>

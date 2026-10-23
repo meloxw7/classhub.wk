@@ -64,6 +64,19 @@ body {
 .eyebrow {
   @apply text-xs font-bold tracking-widest uppercase text-violet-600;
 }
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-rise {
+  animation: fade-rise 0.5s ease-out;
+}
 .chip {
   @apply text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-2.5 py-1;
 }
