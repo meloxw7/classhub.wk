@@ -430,7 +430,7 @@ export default function Messages() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{conversation.partner.name}</p>
-                  <p className="text-xs text-slate-400 truncate">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                     {conversation.lastMessage.senderId === user?.id
                       ? `Você: ${formatPreview(conversation.lastMessage)}`
                       : formatPreview(conversation.lastMessage)}
@@ -484,7 +484,7 @@ export default function Messages() {
                 </button>
               </div>
 
-              <div ref={scrollRef} className="h-[26rem] overflow-y-auto p-5 space-y-3 bg-slate-50/60">
+              <div ref={scrollRef} className="h-[26rem] overflow-y-auto p-5 space-y-3 bg-slate-50/60 dark:bg-slate-900/50">
                 {loadingChat && <Skeleton className="h-12 w-2/3" />}
                 {!loadingChat && messages.length === 0 && (
                   <p className="muted text-sm text-center py-10">

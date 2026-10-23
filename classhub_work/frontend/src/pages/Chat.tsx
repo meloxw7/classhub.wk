@@ -319,7 +319,7 @@ export default function Chat() {
             <MessagesSquare className="text-violet-600" />
           </div>
 
-          <div ref={scrollRef} className="h-[26rem] overflow-y-auto p-5 space-y-3 bg-slate-50/60">
+          <div ref={scrollRef} className="h-[26rem] overflow-y-auto p-5 space-y-3 bg-slate-50/60 dark:bg-slate-900/50">
             {loadingSubjects && <Skeleton className="h-16 w-full" />}
 
             {!loadingSubjects &&
