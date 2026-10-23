@@ -75,7 +75,10 @@ function validMedia(type: string, originalName: string) {
 }
 async function assertPartner(me: string, partner: string) {
   if (partner === me) throw { status: 400, message: 'Você não pode conversar consigo mesmo' };
-  const r = await pool.query('SELECT id,name,avatar_path,role FROM users WHERE id=$1', [partner]);
+  const r = await pool.query(
+    'SELECT id,name,username,avatar_path,role FROM users WHERE id=$1',
+    [partner]
+  );
   if (!r.rowCount) throw { status: 404, message: 'Usuário não encontrado' };
   return r.rows[0];
 }
@@ -110,7 +113,7 @@ router.get('/conversations', async (req: AuthRequest, res) => {
   const partnerIds = r.rows.map((row: any) => row.partner_id);
   const users = partnerIds.length
     ? await pool.query(
-        `SELECT id,name,avatar_path,role FROM users WHERE id = ANY($1::uuid[])`,
+        `SELECT id,name,username,avatar_path,role FROM users WHERE id = ANY($1::uuid[])`,
         [partnerIds]
       )
     : { rows: [] };
@@ -123,6 +126,7 @@ router.get('/conversations', async (req: AuthRequest, res) => {
         partner: {
           id: row.partner_id,
           name: partner.name || '?',
+          username: partner.username || null,
           avatar_path: partner.avatar_path,
           role: partner.role,
         },

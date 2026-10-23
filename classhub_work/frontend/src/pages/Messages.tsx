@@ -30,7 +30,7 @@ type DmMessage = {
 };
 
 type Conversation = {
-  partner: { id: string; name: string; avatar_path?: string | null; role: string };
+  partner: { id: string; name: string; username?: string | null; avatar_path?: string | null; role: string };
   lastMessage: DmMessage;
   unread: number;
 };
@@ -59,12 +59,12 @@ export default function Messages() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
-  const [activePartner, setActivePartner] = useState<{ id: string; name: string; avatar_path?: string | null } | null>(
-    () => {
-      const id = params.get('u');
-      return id ? { id, name: '' } : null;
-    }
-  );
+  const [activePartner, setActivePartner] = useState<{
+    id: string;
+    name: string;
+    username?: string | null;
+    avatar_path?: string | null;
+  } | null>(null);
   const [messages, setMessages] = useState<DmMessage[]>([]);
   const [typing, setTyping] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -106,6 +106,7 @@ export default function Messages() {
       setActivePartner({
         id: r.data.partner.id,
         name: r.data.partner.name,
+        username: r.data.partner.username,
         avatar_path: r.data.partner.avatar_path,
       });
       setMessages(r.data.messages);
@@ -476,7 +477,14 @@ export default function Messages() {
                     size={38}
                   />
                   <div className="text-left">
-                    <h3 className="font-bold">{activePartner.name || 'Conversa'}</h3>
+                    <h3 className="font-bold">
+                      {activePartner.name || 'Conversa'}
+                      {activePartner.username && (
+                        <span className="text-sm text-violet-500 dark:text-violet-400 font-semibold ml-1.5">
+                          @{activePartner.username}
+                        </span>
+                      )}
+                    </h3>
                     <p className="text-xs text-slate-400">
                       {typing ? 'digitando…' : connected ? 'no momento' : 'reconectando…'}
                     </p>
