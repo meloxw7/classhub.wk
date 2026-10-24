@@ -239,7 +239,7 @@ export default function Profile() {
                 @
               </span>
               <input
-                className="input pl-8"
+                className="input pl-10"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                 maxLength={20}
