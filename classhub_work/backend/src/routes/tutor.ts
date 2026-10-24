@@ -4,11 +4,12 @@ import mammoth from 'mammoth';
 import PDFDocument from 'pdfkit';
 import { pool } from '../lib/db';
 import { auth, AuthRequest } from '../middleware/auth';
+import { logger } from '../lib/logger';
 
 const router = Router();
 router.use(auth);
 
-const AI_MODEL = process.env.AI_MODEL || 'gemini-3.8-flash';
+const AI_MODEL = process.env.AI_MODEL || 'gemini-3.5-flash';
 const TUTOR_NAME = process.env.TUTOR_NAME || 'Lumi';
 
 const ATTACHMENT_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.md', '.docx'];
@@ -131,6 +132,10 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
   });
 
   try {
+    const upstreamTimeout = setTimeout(
+      () => controller.abort(new Error('Tempo esgotado ao contatar o provedor de IA')),
+      60_000
+    );
     const upstream = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:streamGenerateContent?alt=sse`,
       {
@@ -144,10 +149,30 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
         }),
       }
     );
+    clearTimeout(upstreamTimeout);
     if (!upstream.ok || !upstream.body) {
       clearInterval(heartbeat);
+      const detail = upstream.body ? await upstream.text().catch(() => '') : '';
+      let reason = '';
+      try {
+        reason = JSON.parse(detail)?.error?.message || '';
+      } catch {}
+      logger.error(
+        { status: upstream.status, model: AI_MODEL, reason },
+        'Falha ao consultar o provedor de IA'
+      );
+      const friendly =
+        upstream.status === 404
+          ? `O modelo ${AI_MODEL} não está disponível para esta chave. Configure AI_MODEL no .env do backend.`
+          : upstream.status === 401 || upstream.status === 403
+            ? 'A chave da IA é inválida ou não tem permissão (verifique AI_API_KEY).'
+            : upstream.status === 429
+              ? 'Limite de uso da IA atingido. Tente novamente em instantes.'
+              : `Falha ao consultar o tutor (status ${upstream.status}). Tente novamente.`;
       res.write(
-        `data: ${JSON.stringify({ error: 'Falha ao consultar o tutor. Tente novamente.' })}\n\n`
+        `data: ${JSON.stringify({
+          error: reason ? `${friendly} Detalhe: ${reason}` : friendly,
+        })}\n\n`
       );
       res.end();
       return;
@@ -177,8 +202,9 @@ router.post('/chat', attachmentUpload.array('files', 3), async (req: AuthRequest
     clearInterval(heartbeat);
     res.write('data: [DONE]\n\n');
     res.end();
-  } catch {
+  } catch (error: any) {
     clearInterval(heartbeat);
+    logger.error({ err: error, model: AI_MODEL }, 'Erro de conexão com o provedor de IA');
     try {
       res.write(`data: ${JSON.stringify({ error: 'Erro de conexão com o tutor.' })}\n\n`);
       res.end();

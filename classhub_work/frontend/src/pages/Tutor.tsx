@@ -4,6 +4,7 @@ import {
   Copy,
   FileDown,
   FileText,
+  KeyRound,
   Paperclip,
   Send,
   Sparkles,
@@ -436,10 +437,39 @@ export default function Tutor() {
 
           {error && (
             <div className="flex justify-center">
-              <span className="inline-flex items-center gap-2 rounded-full bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-300 text-xs font-semibold px-3 py-1.5">
-                <X size={13} />
-                {error}
-              </span>
+              {error.includes('AI_API_KEY') ? (
+                <div className="card max-w-lg p-5 border-amber-200 dark:border-amber-900">
+                  <div className="flex items-center gap-2 mb-2">
+                    <KeyRound size={17} className="text-amber-500 shrink-0" />
+                    <h4 className="font-bold text-sm">
+                      A Lumi precisa de uma chave do Google para funcionar
+                    </h4>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1.5 text-sm text-slate-600 dark:text-slate-300">
+                    <li>
+                      Crie uma chave gratuita em{' '}
+                      <a
+                        href="https://aistudio.google.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-violet-600 font-semibold hover:underline"
+                      >
+                        aistudio.google.com
+                      </a>
+                    </li>
+                    <li>
+                      No arquivo <code className="text-xs bg-slate-100 dark:bg-slate-800 rounded px-1.5 py-0.5">classhub_work/backend/.env</code>{' '}
+                      adicione a linha <code className="text-xs bg-slate-100 dark:bg-slate-800 rounded px-1.5 py-0.5">AI_API_KEY=sua-chave</code>
+                    </li>
+                    <li>Reinicie o backend e pergunte algo novamente</li>
+                  </ol>
+                </div>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-full bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-300 text-xs font-semibold px-3 py-1.5">
+                  <X size={13} />
+                  {error}
+                </span>
+              )}
             </div>
           )}
         </div>

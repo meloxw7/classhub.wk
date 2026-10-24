@@ -263,6 +263,10 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 });
 server.listen(port, () => {
   logger.info(`ClassHub API em http://localhost:${port}`);
+  if (!process.env.AI_API_KEY)
+    logger.warn(
+      'Lumi (tutor IA) desativada: crie uma chave gratuita em https://aistudio.google.com, defina AI_API_KEY no .env do backend e reinicie.'
+    );
   eventReminders();
   setInterval(eventReminders, 30 * 60 * 1000);
 });
