@@ -1,10 +1,57 @@
 # ClassHub
 
-Portal acadêmico integrado: disciplinas, materiais, agenda com calendário, trabalhos, fórum, notificações e Lumi (assistente de estudos IA).
+Classhub foi um sistema criado pensado em facilitar o trabalho de **professores, coordenadores e gestores de instituições** contendo:
+
+- Lançamento de materiais
+- Marcação de eventos pedagógicos no calendário
+- Sistema de boletim de notas por aluno com cálculo automático integrado
+- Aplicação de notas individuais por trabalhos e provas
+- Materiais e marcações separadas por matérias
+
+Afim também de organizar e facilitar rotinas de estudo dos **ALUNOS**, e alguns extras que ajudam a melhorar o relacionamento
+de amizade e inclusão entre os alunos das instituições, contendo:
+
+- Dashboard com rapida visualização de:
+  │ - Atividades pendentes
+  │ - Próximos eventos (Atividades, trabalhos, provas)
+  │ - Senso de urgência em prazo de entregas
+  │ - Contador de dias para a próxima entrega
+- Sala de estudos
+- Bate papo de turmas *ameaçado de remoção*
+- Separação de entrega e recebimento de materiais por matéria
+- Bloco de notas com salvamento automático separado também por materia
+- Agenda para facilitar visualização de eventos escolares alimentados pelos colaboradores da instituição
+- Aba para entrega de trabalhos e atividades solicitadas por professores
+- Bate-papo direto com mensagens privadas para alunos
+- Comunidades "@" Como uma rede social de interações entre os alunos
+- *Lumi (Nossa Assistente virtual com intuito de auxiliar alunos em pesquisas de estudos)*
+- FlashCards criados pelos próprios alunos para um estudo interativo e divertido
+- Conversor ABNT automático
+
+Stack:
+
+-FrontEnd:
+React 19 + Vite + Tailwind
+
+BackEnd:
+Express 5 + PostgreSQL
+
+
+## Pensado, criado e codado única e especialmente por mim Lucas Melo! 
+*URL LINKEDIN: www.linkedin.com/in/lucas-melo-1bb067433*
+*WhatsApp para contato: +55 (81) 99686-5314*
+*Instagram Pessoal: @meloxw7_*
+*Instagram Profissional: ainda não feito*
+
+## Obrigado pela atenção e preferência!
 
 Stack: React 19 + Vite + Tailwind (frontend) · Express 5 + PostgreSQL (backend)
 
-## Funcionalidades
+
+
+**/// FUNCIONALIDADES ///**
+
+
 
 */// CONTA E LOGIN (AUTENTICAÇÃO) ///*
 
