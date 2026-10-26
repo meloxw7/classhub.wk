@@ -161,7 +161,7 @@ const spec = {
       get: { tags: ['Materiais'], summary: 'Histórico de versões' },
     },
     '/api/materials/{id}': {
-      delete: { tags: ['Materiais'], summary: 'Exclui material (professor)' },
+      delete: { tags: ['Materiais'], summary: 'Exclui material (professor ou administrador)' },
     },
     '/api/notes/{subjectId}': {
       get: { tags: ['Notas'], summary: 'Bloco de notas do usuário para a disciplina' },
@@ -174,16 +174,25 @@ const spec = {
         summary: 'Cria evento (visibility: ALL / SELECTED / PRIVATE)',
       },
     },
+    '/api/events/{id}': {
+      delete: { tags: ['Agenda'], summary: 'Exclui marcação (autor ou administrador)' },
+    },
     '/api/notices': {
       get: { tags: ['Avisos'], summary: 'Lista avisos (fixados primeiro)' },
       post: { tags: ['Avisos'], summary: 'Publica aviso (professor, opção de fixar)' },
+    },
+    '/api/notices/{id}': {
+      delete: { tags: ['Avisos'], summary: 'Exclui aviso (autor ou administrador)' },
     },
     '/api/assignments': {
       get: { tags: ['Trabalhos'], summary: 'Lista trabalhos' },
       post: { tags: ['Trabalhos'], summary: 'Cria trabalho (professor) — gera evento + notifica' },
     },
     '/api/assignments/{id}': {
-      delete: { tags: ['Trabalhos'], summary: 'Exclui trabalho (professor, com entregas e evento)' },
+      delete: {
+        tags: ['Trabalhos'],
+        summary: 'Exclui trabalho (professor ou administrador, com entregas e evento)',
+      },
     },
     '/api/assignments/{id}/submit': {
       post: { tags: ['Trabalhos'], summary: 'Entrega/reenvio de trabalho (aluno, multipart)' },

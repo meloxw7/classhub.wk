@@ -227,6 +227,7 @@ export function Subjects() {
 export function Materials() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -249,6 +250,26 @@ export function Materials() {
   const [shareMaterial, setShareMaterial] = useState<any>(null);
   const [shareComment, setShareComment] = useState('');
   const [sharing, setSharing] = useState(false);
+
+  async function remove(id: string, title: string) {
+    const ok = await confirm({
+      title: `Excluir "${title}"?`,
+      text: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      danger: true,
+    });
+
+    if (!ok) return;
+
+    try {
+      await api.delete(`/materials/${id}`);
+      await load();
+      toast.success('Material excluído.');
+    } catch (error) {
+      console.error('Erro ao excluir material:', error);
+      toast.error('Não foi possível excluir o material.');
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -477,6 +498,15 @@ export function Materials() {
               >
                 <Share2 size={14} /> Compartilhar na comunidade
               </button>
+
+              {(user?.role === 'PROFESSOR' || user?.is_admin) && (
+                <button
+                  className="btn-danger w-full mt-2 !py-2 text-xs"
+                  onClick={() => remove(material.id, material.title)}
+                >
+                  <Trash2 size={14} /> Excluir material
+                </button>
+              )}
 
               {user?.role === 'ALUNO' && (
                 <button
@@ -850,6 +880,7 @@ export function Notes() {
 export function Agenda() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -956,6 +987,26 @@ export function Agenda() {
 
   const dayEvents = items.filter((event) => dayKey(new Date(event.event_date)) === selectedDate);
 
+  async function remove(id: string, title: string) {
+    const ok = await confirm({
+      title: `Excluir "${title}"?`,
+      text: 'A marcação será removida da agenda.',
+      confirmLabel: 'Excluir',
+      danger: true,
+    });
+
+    if (!ok) return;
+
+    try {
+      await api.delete(`/events/${id}`);
+      await load();
+      toast.success('Marcação excluída.');
+    } catch (error: any) {
+      console.error('Erro ao excluir evento:', error);
+      toast.error(error.response?.data?.message || 'Não foi possível excluir a marcação.');
+    }
+  }
+
   return (
     <Shell
       title="Agenda acadêmica"
@@ -1014,6 +1065,15 @@ export function Agenda() {
                       minute: '2-digit',
                     })}
                   </p>
+
+                  {(event.author_id === user?.id || user?.is_admin) && (
+                    <button
+                      className="btn-danger w-full mt-3 !py-1.5 text-xs"
+                      onClick={() => remove(event.id, event.title)}
+                    >
+                      <Trash2 size={13} /> Excluir
+                    </button>
+                  )}
                 </div>
               ))}
 
@@ -1433,7 +1493,7 @@ export function Assignments() {
                 </>
               )}
 
-              {user?.role === 'PROFESSOR' && (
+              {(user?.role === 'PROFESSOR' || user?.is_admin) && (
                 <>
                   <button className="btn-secondary mt-4" onClick={() => openSubs(assignment)}>
                     <ClipboardCheck size={16} />

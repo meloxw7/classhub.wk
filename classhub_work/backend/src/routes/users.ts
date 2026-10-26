@@ -29,7 +29,7 @@ router.get('/students', role('PROFESSOR'), async (_req, res) => {
 router.get('/me', async (req: AuthRequest, res) => {
   await ensureUsernameSchema();
   const r = await pool.query(
-    'SELECT id,name,username,email,role,avatar_path,course,semester,ra,institution,bio FROM users WHERE id=$1',
+    'SELECT id,name,username,email,role,avatar_path,course,semester,ra,institution,bio,is_admin FROM users WHERE id=$1',
     [req.user!.id]
   );
   if (!r.rowCount) return res.status(404).json({ message: 'Usuário não encontrado' });

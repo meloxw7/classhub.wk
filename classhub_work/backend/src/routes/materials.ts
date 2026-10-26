@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { pool } from '../lib/db';
-import { auth, AuthRequest, role } from '../middleware/auth';
+import { auth, AuthRequest, role, roleOrAdmin } from '../middleware/auth';
 import { notifyAllStudents } from '../lib/notify';
 const router = Router();
 router.use(auth);
@@ -90,7 +90,7 @@ router.get('/:id/versions', async (req, res) => {
   );
   res.json(r.rows);
 });
-router.delete('/:id', role('PROFESSOR'), async (req, res) => {
+router.delete('/:id', roleOrAdmin('PROFESSOR'), async (req, res) => {
   await pool.query('DELETE FROM materials WHERE id=$1', [req.params.id]);
   res.status(204).end();
 });

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../lib/env';
+import { isUserAdmin } from '../lib/admin';
 export type AuthUser = { id: string; name: string; email: string; role: 'PROFESSOR' | 'ALUNO' };
 export type AuthRequest = Request & { user?: AuthUser };
 export function auth(req: AuthRequest, res: Response, next: NextFunction) {
@@ -19,4 +20,16 @@ export const role =
     if (!req.user || !roles.includes(req.user.role))
       return res.status(403).json({ message: 'Acesso negado' });
     next();
+  };
+export const adminOnly = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user || !(await isUserAdmin(req.user.id)))
+    return res.status(403).json({ message: 'Acesso restrito ao administrador' });
+  next();
+};
+export const roleOrAdmin =
+  (...roles: AuthUser['role'][]) =>
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) return res.status(403).json({ message: 'Acesso negado' });
+    if (roles.includes(req.user.role) || (await isUserAdmin(req.user.id))) return next();
+    return res.status(403).json({ message: 'Acesso negado' });
   };

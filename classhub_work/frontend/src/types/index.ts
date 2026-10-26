@@ -10,4 +10,5 @@ export type User = {
   semester?: string | null;
   ra?: string | null;
   institution?: string | null;
+  is_admin?: boolean | null;
 };

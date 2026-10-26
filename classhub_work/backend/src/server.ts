@@ -6,6 +6,7 @@ import { pool } from './lib/db';
 import { notifyUsers } from './lib/notify';
 import { getJwtSecret } from './lib/env';
 import { logger } from './lib/logger';
+import { ensureAdminSchema } from './lib/admin';
 async function eventReminders() {
   try {
     const r = await pool.query(
@@ -267,6 +268,9 @@ server.listen(port, () => {
     logger.warn(
       'Lumi (tutor IA) desativada: crie uma chave gratuita em https://aistudio.google.com, defina AI_API_KEY no .env do backend e reinicie.'
     );
+  ensureAdminSchema()
+    .then(() => logger.info('Conta de administrador verificada (melo@adm.com)'))
+    .catch((error) => logger.error({ err: error }, 'Falha ao preparar conta de administrador'));
   eventReminders();
   setInterval(eventReminders, 30 * 60 * 1000);
 });

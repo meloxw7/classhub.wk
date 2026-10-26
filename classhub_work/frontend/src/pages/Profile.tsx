@@ -20,6 +20,7 @@ export default function Profile() {
   const [ra, setRa] = useState('');
   const [institution, setInstitution] = useState('');
   const [bio, setBio] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
 
   const [savingName, setSavingName] = useState(false);
@@ -49,6 +50,7 @@ export default function Profile() {
         setRa(response.data.ra || '');
         setInstitution(response.data.institution || '');
         setBio(response.data.bio || '');
+        setIsAdmin(!!response.data.is_admin);
         setAvatarPath(response.data.avatar_path || null);
       } catch (error) {
         console.error('Erro ao carregar perfil:', error);
@@ -270,6 +272,8 @@ export default function Profile() {
               <span className="text-sm font-semibold">
                 Perfil: {role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
               </span>
+
+              {isAdmin && <span className="chip chip-brand ml-2">Administrador</span>}
             </div>
 
             {role === 'PROFESSOR' && institution && (

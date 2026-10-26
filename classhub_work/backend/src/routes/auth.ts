@@ -6,6 +6,7 @@ import { getJwtSecret } from '../lib/env';
 import { generateToken, hashToken } from '../lib/tokens';
 import { sendMail } from '../lib/mailer';
 import { ensureUsernameSchema, uniqueUsername, USERNAME_RE } from '../lib/username';
+import { ensureAdminSchema } from '../lib/admin';
 
 const router = Router();
 
@@ -43,8 +44,9 @@ router.post('/login', async (req, res) => {
   const { email, password, rememberMe } = req.body || {};
   if (!email || !password)
     return res.status(400).json({ message: 'E-mail e senha são obrigatórios' });
+  await ensureAdminSchema().catch(() => {});
   const r = await pool.query(
-    'SELECT id,name,username,email,password_hash,role,course,semester,ra,institution FROM users WHERE email=$1',
+    'SELECT id,name,username,email,password_hash,role,course,semester,ra,institution,is_admin FROM users WHERE email=$1',
     [String(email).toLowerCase().trim()]
   );
   if (!r.rowCount || !(await bcrypt.compare(password, r.rows[0].password_hash)))

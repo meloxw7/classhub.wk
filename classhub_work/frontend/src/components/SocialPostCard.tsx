@@ -127,7 +127,7 @@ export default function SocialPostCard({
   const [pollCounts, setPollCounts] = useState<Record<string, number>>(post.pollCounts || {});
   const [pollTotal, setPollTotal] = useState(post.pollTotal || 0);
   const [voteBusy, setVoteBusy] = useState<number | null>(null);
-  const mine = user?.id === post.author.id;
+  const mine = user?.id === post.author.id || !!user?.is_admin;
   const isPoll = !!post.pollOptions?.length;
 
   async function vote(optionIndex: number) {
@@ -249,7 +249,7 @@ export default function SocialPostCard({
             >
               <Reply size={12} />
             </button>
-            {user?.id === c.author.id && (
+            {(user?.id === c.author.id || !!user?.is_admin) && (
               <button
                 onClick={() => removeComment(c.id)}
                 title="Excluir comentário"

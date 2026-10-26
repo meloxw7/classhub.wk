@@ -4,6 +4,7 @@ import { auth, AuthRequest } from '../middleware/auth';
 import { notifyUsers } from '../lib/notify';
 import { logger } from '../lib/logger';
 import { ensureUsernameSchema } from '../lib/username';
+import { isUserAdmin } from '../lib/admin';
 const router = Router();
 router.use(auth);
 const ENSURE_SQL = `
@@ -261,9 +262,10 @@ router.post('/posts/:id/vote', async (req: AuthRequest, res) => {
   res.json({ myVote: optionIndex, pollCounts, pollTotal: total.rows[0].n });
 });
 router.delete('/posts/:id', async (req: AuthRequest, res) => {
+  const admin = await isUserAdmin(req.user!.id);
   const r = await pool.query(
-    'DELETE FROM social_posts WHERE id=$1 AND author_id=$2 RETURNING id',
-    [req.params.id, req.user!.id]
+    'DELETE FROM social_posts WHERE id=$1 AND (author_id=$2 OR $3) RETURNING id',
+    [req.params.id, req.user!.id, admin]
   );
   if (!r.rowCount) return res.status(404).json({ message: 'Publicação não encontrada' });
   res.json({ ok: true });
@@ -389,9 +391,10 @@ router.post('/posts/:id/comments', async (req: AuthRequest, res) => {
   });
 });
 router.delete('/comments/:id', async (req: AuthRequest, res) => {
+  const admin = await isUserAdmin(req.user!.id);
   const r = await pool.query(
-    'DELETE FROM social_comments WHERE id=$1 AND author_id=$2 RETURNING id',
-    [req.params.id, req.user!.id]
+    'DELETE FROM social_comments WHERE id=$1 AND (author_id=$2 OR $3) RETURNING id',
+    [req.params.id, req.user!.id, admin]
   );
   if (!r.rowCount) return res.status(404).json({ message: 'Comentário não encontrado' });
   res.json({ ok: true });

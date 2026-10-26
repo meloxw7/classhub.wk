@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { pool } from '../lib/db';
-import { auth, AuthRequest, role } from '../middleware/auth';
+import { auth, AuthRequest, role, roleOrAdmin } from '../middleware/auth';
 import { notifyUsers } from '../lib/notify';
 const router = Router();
 router.use(auth);
@@ -35,7 +35,7 @@ router.post('/', role('PROFESSOR'), async (req, res) => {
   );
   res.status(201).json(assignment);
 });
-router.delete('/:id', role('PROFESSOR'), async (req: AuthRequest, res) => {
+router.delete('/:id', roleOrAdmin('PROFESSOR'), async (req: AuthRequest, res) => {
   const r = await pool.query('DELETE FROM assignments WHERE id=$1 RETURNING id', [req.params.id]);
   if (!r.rowCount) return res.status(404).json({ message: 'Trabalho não encontrado' });
   res.status(204).end();

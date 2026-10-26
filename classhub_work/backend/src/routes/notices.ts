@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { pool } from '../lib/db';
 import { auth, AuthRequest, role } from '../middleware/auth';
 import { notifyAllStudents } from '../lib/notify';
+import { isUserAdmin } from '../lib/admin';
 const router = Router();
 router.use(auth);
 router.get('/', async (req, res) => {
@@ -20,5 +21,14 @@ router.post('/', role('PROFESSOR'), async (req: AuthRequest, res) => {
   );
   await notifyAllStudents('Novo aviso', title, 'NOTICE');
   res.status(201).json(r.rows[0]);
+});
+router.delete('/:id', async (req: AuthRequest, res) => {
+  const admin = await isUserAdmin(req.user!.id);
+  const r = await pool.query(
+    'DELETE FROM notices WHERE id=$1 AND (author_id=$2 OR $3) RETURNING id',
+    [req.params.id, req.user!.id, admin]
+  );
+  if (!r.rowCount) return res.status(404).json({ message: 'Aviso não encontrado' });
+  res.json({ ok: true });
 });
 export default router;
