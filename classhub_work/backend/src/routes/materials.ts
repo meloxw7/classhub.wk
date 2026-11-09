@@ -3,14 +3,50 @@ import multer from 'multer';
 import { pool } from '../lib/db';
 import { auth, AuthRequest, role, roleOrAdmin } from '../middleware/auth';
 import { notifyAllStudents } from '../lib/notify';
+import { randomUUID } from 'crypto';
+import path from 'path';
+import { fileTypeFromBuffer } from 'file-type';
+
 const router = Router();
 router.use(auth);
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/jpeg',
+  'image/png',
+  'text/plain',
+  'application/zip',
+];
+const ALLOWED_EXTENSIONS = [
+  '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.txt', '.zip',
+];
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (_, f, cb) =>
-    cb(null, `${Date.now()}-${f.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`),
+    cb(null, `${randomUUID()}${path.extname(f.originalname).toLowerCase()}`),
 });
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_, f, cb) => {
+    const extOk = ALLOWED_EXTENSIONS.some((x) => f.originalname.toLowerCase().endsWith(x));
+    if (!extOk) return cb(new Error('Tipo de arquivo não permitido'));
+    cb(null, true);
+  },
+});
+
+async function validateMimeType(filePath: string): Promise<boolean> {
+  const buffer = await fs.promises.readFile(filePath);
+  const type = await fileTypeFromBuffer(buffer);
+  return !!(type && ALLOWED_MIME_TYPES.includes(type.mime));
+}
+
+import fs from 'fs';
 router.get('/', async (req: AuthRequest, res) => {
   const subjectId = String(req.query.subjectId || '');
   const tag = String(req.query.tag || '');
@@ -24,6 +60,13 @@ router.post('/', role('PROFESSOR'), upload.single('file'), async (req: AuthReque
   const { subjectId, title, description, type, url, tags, dueDate } = req.body;
   if (!subjectId || !title || !type)
     return res.status(400).json({ message: 'Preencha disciplina, título e tipo' });
+  if (req.file) {
+    const valid = await validateMimeType(req.file.path);
+    if (!valid) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ message: 'Tipo de arquivo não permitido (assinatura inválida)' });
+    }
+  }
   const r = await pool.query(
     'INSERT INTO materials(subject_id,author_id,title,description,type,url,file_path,tags,due_date) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
     [
@@ -71,6 +114,13 @@ router.patch('/:id/progress', role('ALUNO'), async (req: AuthRequest, res) => {
 router.post('/:id/version', role('PROFESSOR'), upload.single('file'), async (req, res) => {
   const m = await pool.query('SELECT version FROM materials WHERE id=$1', [req.params.id]);
   if (!m.rowCount) return res.status(404).json({ message: 'Material não encontrado' });
+  if (req.file) {
+    const valid = await validateMimeType(req.file.path);
+    if (!valid) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ message: 'Tipo de arquivo não permitido (assinatura inválida)' });
+    }
+  }
   const version = Number(m.rows[0].version) + 1;
   const r = await pool.query(
     'INSERT INTO material_versions(material_id,version,file_path,file_name) VALUES($1,$2,$3,$4) RETURNING *',

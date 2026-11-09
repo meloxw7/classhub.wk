@@ -5,6 +5,7 @@ import path from 'path';
 import { pool } from '../lib/db';
 import { auth, AuthRequest } from '../middleware/auth';
 import { logger } from '../lib/logger';
+import { randomUUID } from 'crypto';
 const router = Router();
 router.use(auth);
 const ENSURE_SQL = `
@@ -49,7 +50,7 @@ const upload = multer({
   storage: multer.diskStorage({
     destination: 'uploads/',
     filename: (_, f, cb) =>
-      cb(null, `dm-${Date.now()}-${f.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`),
+      cb(null, `dm-${randomUUID()}${path.extname(f.originalname).toLowerCase()}`),
   }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, f, cb) => {

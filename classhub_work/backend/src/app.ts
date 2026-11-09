@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import cookieParser from 'cookie-parser';
 import auth from './routes/auth';
 import subjects from './routes/subjects';
 import materials from './routes/materials';
@@ -25,13 +26,35 @@ import docs from './routes/docs';
 import social from './routes/social';
 import direct from './routes/direct';
 import flashcards from './routes/flashcards';
+import files from './routes/files';
+import { initRedis, createRateLimiter } from './lib/rateLimit';
 dotenv.config();
 const app = express();
 const uploadDir = path.resolve('uploads');
 fs.mkdirSync(uploadDir, { recursive: true });
 app.disable('x-powered-by');
+app.use(cookieParser());
 app.use(
-  helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } })
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        fontSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'", 'ws:', 'wss:'],
+        mediaSrc: ["'self'", 'blob:'],
+      },
+    },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  })
 );
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const allowedOrigins = [
@@ -47,45 +70,21 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error('Origem não permitida pelo CORS'));
     },
+    credentials: true,
   })
 );
 app.use('/api/abnt', express.json({ limit: '80mb' }));
 app.use(express.json({ limit: '2mb' }));
-app.use('/uploads', express.static(uploadDir));
 app.get('/api/health', (_, res) =>
   res.json({ ok: true, service: 'ClassHub API', time: new Date().toISOString() })
 );
-const apiHits = new Map<string, { n: number; t: number }>();
+
 const API_LIMIT = Number(process.env.API_RATE_LIMIT) || 240;
-app.use('/api', (req, res, next) => {
-  if (req.path === '/health') return next();
-  const ip = req.ip || 'unknown';
-  const now = Date.now();
-  const h = apiHits.get(ip);
-  if (!h || now - h.t > 60000) {
-    if (apiHits.size > 5000) apiHits.clear();
-    apiHits.set(ip, { n: 1, t: now });
-    return next();
-  }
-  h.n++;
-  if (h.n > API_LIMIT)
-    return res.status(429).json({ message: 'Muitas requisições. Tente novamente em instantes.' });
-  next();
-});
-const hits = new Map<string, { n: number; t: number }>();
-app.use('/api/auth', (req, res, next) => {
-  const ip = req.ip || 'unknown';
-  const now = Date.now();
-  const h = hits.get(ip);
-  if (!h || now - h.t > 60000) {
-    hits.set(ip, { n: 1, t: now });
-    return next();
-  }
-  h.n++;
-  if (h.n > 30)
-    return res.status(429).json({ message: 'Muitas tentativas. Tente novamente em instantes.' });
-  next();
-});
+app.use('/api', createRateLimiter(API_LIMIT, 60000, 'api'));
+app.use('/api/auth', createRateLimiter(30, 60000, 'auth'));
+
+initRedis().catch(() => {});
+
 app.use('/api/auth', auth);
 app.use('/api/subjects', subjects);
 app.use('/api/materials', materials);
@@ -107,6 +106,7 @@ app.use('/api/docs', docs);
 app.use('/api/social', social);
 app.use('/api/direct', direct);
 app.use('/api/flashcards', flashcards);
+app.use('/api/files', files);
 app.use((err: any, _req: any, res: any, _next: any) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
     const limitMb = err?.field === 'avatar' ? 2 : 50;

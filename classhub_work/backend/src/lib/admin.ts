@@ -2,23 +2,34 @@ import bcrypt from 'bcryptjs';
 import { pool } from './db';
 import { logger } from './logger';
 
-const ADMIN_EMAIL = 'melo@adm.com';
-const ADMIN_PASSWORD = 'adm14082007';
+export function getAdminCredentials(): { email: string; password: string } {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    if (process.env.NODE_ENV === 'production')
+      throw new Error(
+        'ADMIN_EMAIL e ADMIN_PASSWORD são obrigatórias em produção. Defina no arquivo .env.'
+      );
+    return { email: 'admin@dev.classhub', password: 'admin-dev-only' };
+  }
+  return { email, password };
+}
 
 let ensurePromise: Promise<void> | null = null;
 
 export function ensureAdminSchema(): Promise<void> {
   if (!ensurePromise) {
     ensurePromise = (async () => {
+      const { email, password } = getAdminCredentials();
       await pool.query(
         'ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE'
       );
-      const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+      const hash = await bcrypt.hash(password, 10);
       await pool.query(
         `INSERT INTO users(name,email,password_hash,role,username,institution,is_admin)
          VALUES('Administrador',$1,$2,'PROFESSOR','admin','ClassHub',TRUE)
          ON CONFLICT (email) DO NOTHING`,
-        [ADMIN_EMAIL, hash]
+        [email, hash]
       );
     })().catch((error) => {
       ensurePromise = null;

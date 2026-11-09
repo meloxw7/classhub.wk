@@ -424,6 +424,7 @@ npm run db:init
 
 # 2. Variáveis de ambiente
 #    Backend:  copie backend/.env.example para backend/.env e preencha
+#    **Obrigatórias em produção:** `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CLIENT_URL`
 #    Frontend: copie frontend/.env.example para frontend/.env se a API não estiver em http://localhost:4000/api
 
 # 3. Rodar em desenvolvimento (dois terminais)
@@ -622,6 +623,7 @@ npm start
 
 2. **Backend**: defina `JWT_SECRET` forte (gere com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) 
 e `CLIENT_URL` com a origem real do frontend (usado no CORS).
+Defina também `ADMIN_EMAIL` e `ADMIN_PASSWORD` para a conta de administrador.
 
 3. **Banco**: crie o schema com `npm run db:init` ou aplique `database/schema.sql` manualmente.
 

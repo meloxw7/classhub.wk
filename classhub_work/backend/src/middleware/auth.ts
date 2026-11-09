@@ -5,7 +5,7 @@ import { isUserAdmin } from '../lib/admin';
 export type AuthUser = { id: string; name: string; email: string; role: 'PROFESSOR' | 'ALUNO' };
 export type AuthRequest = Request & { user?: AuthUser };
 export function auth(req: AuthRequest, res: Response, next: NextFunction) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.access_token || req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ message: 'Não autenticado' });
   try {
     req.user = jwt.verify(token, getJwtSecret()) as AuthUser;

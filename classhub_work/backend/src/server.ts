@@ -7,6 +7,8 @@ import { notifyUsers } from './lib/notify';
 import { getJwtSecret } from './lib/env';
 import { logger } from './lib/logger';
 import { ensureAdminSchema } from './lib/admin';
+import { initRedis, closeRedis } from './lib/rateLimit';
+import { cleanupExpiredTokens, cleanupOldAuditLogs } from './lib/cleanup';
 async function eventReminders() {
   try {
     const r = await pool.query(
@@ -77,8 +79,12 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   let joinedRoom = '';
   let dmRoom = '';
   try {
-    const url = new URL(req.url || '/', 'http://localhost');
-    const payload = jwt.verify(url.searchParams.get('token') || '', getJwtSecret()) as any;
+    const cookieHeader = req.headers.cookie || '';
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map((c) => c.split('=').map(decodeURIComponent))
+    );
+    const token = cookies.access_token || new URL(req.url || '/', 'http://localhost').searchParams.get('token') || '';
+    const payload = jwt.verify(token, getJwtSecret()) as any;
     user = { id: payload.id, name: payload.name };
   } catch {
     ws.close(4001, 'Não autenticado');
@@ -262,15 +268,32 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   });
   ws.on('error', () => {});
 });
-server.listen(port, () => {
+server.listen(port, async () => {
   logger.info(`ClassHub API em http://localhost:${port}`);
   if (!process.env.AI_API_KEY)
     logger.warn(
       'Lumi (tutor IA) desativada: crie uma chave gratuita em https://aistudio.google.com, defina AI_API_KEY no .env do backend e reinicie.'
     );
+  await initRedis();
   ensureAdminSchema()
-    .then(() => logger.info('Conta de administrador verificada (melo@adm.com)'))
+    .then(() => logger.info('Conta de administrador verificada'))
     .catch((error) => logger.error({ err: error }, 'Falha ao preparar conta de administrador'));
   eventReminders();
   setInterval(eventReminders, 30 * 60 * 1000);
+  setInterval(cleanupExpiredTokens, 60 * 60 * 1000);
+  setInterval(cleanupOldAuditLogs, 24 * 60 * 60 * 1000);
 });
+
+async function shutdown() {
+  logger.info('Encerrando servidor...');
+  await closeRedis();
+  await pool.end();
+  server.close(() => {
+    logger.info('Servidor encerrado');
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
