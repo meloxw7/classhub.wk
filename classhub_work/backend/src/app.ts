@@ -27,13 +27,24 @@ import social from './routes/social';
 import direct from './routes/direct';
 import flashcards from './routes/flashcards';
 import files from './routes/files';
+import twoFactor from './routes/twoFactor';
+import cspReport from './routes/cspReport';
 import { initRedis, createRateLimiter } from './lib/rateLimit';
+import { ensureCsrfToken, csrfProtection } from './lib/csrf';
 dotenv.config();
 const app = express();
 const uploadDir = path.resolve('uploads');
 fs.mkdirSync(uploadDir, { recursive: true });
 app.disable('x-powered-by');
 app.use(cookieParser());
+app.use(ensureCsrfToken);
+app.use((req, res, next) => {
+  req.setTimeout(30000, () => {
+    res.status(408).json({ message: 'Request timeout' });
+  });
+  next();
+});
+app.use(csrfProtection);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -45,6 +56,7 @@ app.use(
         fontSrc: ["'self'", 'data:'],
         connectSrc: ["'self'", 'ws:', 'wss:'],
         mediaSrc: ["'self'", 'blob:'],
+        reportUri: '/api/csp-report',
       },
     },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -107,6 +119,8 @@ app.use('/api/social', social);
 app.use('/api/direct', direct);
 app.use('/api/flashcards', flashcards);
 app.use('/api/files', files);
+app.use('/api/users', twoFactor);
+app.use('/api', cspReport);
 app.use((err: any, _req: any, res: any, _next: any) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
     const limitMb = err?.field === 'avatar' ? 2 : 50;

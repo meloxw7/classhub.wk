@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../lib/env';
 import { isUserAdmin } from '../lib/admin';
-export type AuthUser = { id: string; name: string; email: string; role: 'PROFESSOR' | 'ALUNO' };
+export type AuthUser = { id: string; name: string; email: string; role: 'PROFESSOR' | 'ALUNO'; twoFactorEnabled?: boolean };
 export type AuthRequest = Request & { user?: AuthUser };
 export function auth(req: AuthRequest, res: Response, next: NextFunction) {
   const token = req.cookies?.access_token || req.headers.authorization?.replace('Bearer ', '');

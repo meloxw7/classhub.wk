@@ -5,6 +5,8 @@ import { notifyUsers } from '../lib/notify';
 import { logger } from '../lib/logger';
 import { ensureUsernameSchema } from '../lib/username';
 import { isUserAdmin } from '../lib/admin';
+import { sanitizeSocialContent } from '../lib/sanitize';
+import { validate, socialPostCreateSchema } from '../lib/validation';
 const router = Router();
 router.use(auth);
 const ENSURE_SQL = `
@@ -180,25 +182,17 @@ router.get('/suggestions', async (req: AuthRequest, res) => {
   );
   res.json(r.rows);
 });
-router.post('/posts', async (req: AuthRequest, res) => {
-  const content = String(req.body?.content || '').trim();
-  const rawOptions = req.body?.pollOptions;
-  const materialId = req.body?.materialId ? String(req.body.materialId) : null;
-  if (!content && !materialId)
+router.post('/posts', validate(socialPostCreateSchema), async (req: AuthRequest, res) => {
+  const { content, pollOptions, repostMaterialId } = req.body;
+  const sanitizedContent = sanitizeSocialContent(content);
+  const materialId = repostMaterialId ? String(repostMaterialId) : null;
+  if (!sanitizedContent && !materialId)
     return res.status(400).json({ message: 'Escreva algo para publicar' });
-  if (content.length > MAX_CONTENT)
+  if (sanitizedContent.length > MAX_CONTENT)
     return res.status(400).json({ message: `Máximo de ${MAX_CONTENT} caracteres` });
   if (materialId) {
     const m = await pool.query('SELECT 1 FROM materials WHERE id=$1', [materialId]);
     if (!m.rowCount) return res.status(400).json({ message: 'Material inválido' });
-  }
-  let pollOptions: string[] | null = null;
-  if (Array.isArray(rawOptions)) {
-    pollOptions = rawOptions.map((o: any) => String(o || '').trim()).filter(Boolean);
-    if (pollOptions.length < 2 || pollOptions.length > 5)
-      return res.status(400).json({ message: 'Enquete precisa de 2 a 5 opções' });
-    if (pollOptions.some((o) => o.length > 80))
-      return res.status(400).json({ message: 'Opções da enquete: máximo de 80 caracteres' });
   }
   const r = await pool.query(
     `INSERT INTO social_posts(author_id,content,poll_options,repost_material_id) VALUES($1,$2,$3,$4)
@@ -207,7 +201,7 @@ router.post('/posts', async (req: AuthRequest, res) => {
        (SELECT username FROM users WHERE id=$1) author_username,
        (SELECT avatar_path FROM users WHERE id=$1) author_avatar,
        (SELECT role FROM users WHERE id=$1) author_role`,
-    [req.user!.id, content, pollOptions, materialId]
+    [req.user!.id, sanitizedContent, pollOptions, materialId]
   );
   const row = r.rows[0];
   if (materialId) {
@@ -218,7 +212,7 @@ router.post('/posts', async (req: AuthRequest, res) => {
     row.repost_subject_id = m.rows[0]?.subject_id;
     row.repost_type = m.rows[0]?.type;
   }
-  notifyMentions(content, req.user!.name, [req.user!.id], 'post');
+  notifyMentions(sanitizedContent, req.user!.name, [req.user!.id], 'post');
   res.status(201).json(
     toPost({
       ...row,
@@ -333,11 +327,12 @@ router.get('/posts/:id/comments', async (req: AuthRequest, res) => {
     )
   );
 });
-router.post('/posts/:id/comments', async (req: AuthRequest, res) => {
-  const content = String(req.body?.content || '').trim();
-  const parentId = req.body?.parentId ? String(req.body.parentId) : null;
-  if (!content) return res.status(400).json({ message: 'Comentário obrigatório' });
-  if (content.length > MAX_CONTENT)
+router.post('/posts/:id/comments', validate(socialPostCreateSchema), async (req: AuthRequest, res) => {
+  const { content, parentId: bodyParentId } = req.body;
+  const sanitizedContent = sanitizeSocialContent(content);
+  const parentId = bodyParentId ? String(bodyParentId) : null;
+  if (!sanitizedContent) return res.status(400).json({ message: 'Comentário obrigatório' });
+  if (sanitizedContent.length > MAX_CONTENT)
     return res.status(400).json({ message: `Máximo de ${MAX_CONTENT} caracteres` });
   const post = await pool.query('SELECT id,author_id FROM social_posts WHERE id=$1', [
     req.params.id,
@@ -353,7 +348,7 @@ router.post('/posts/:id/comments', async (req: AuthRequest, res) => {
   }
   const r = await pool.query(
     'INSERT INTO social_comments(post_id,author_id,content,parent_id) VALUES($1,$2,$3,$4) RETURNING *',
-    [req.params.id, req.user!.id, content, parentId]
+    [req.params.id, req.user!.id, sanitizedContent, parentId]
   );
   const parentAuthor = parentId
     ? await pool.query('SELECT author_id FROM social_comments WHERE id=$1', [parentId])
@@ -373,7 +368,7 @@ router.post('/posts/:id/comments', async (req: AuthRequest, res) => {
       'SOCIAL'
     ).catch(() => {});
   }
-  notifyMentions(content, req.user!.name, [req.user!.id], 'comment');
+  notifyMentions(sanitizedContent, req.user!.name, [req.user!.id], 'comment');
   const me = await pool.query('SELECT username FROM users WHERE id=$1', [req.user!.id]);
   res.status(201).json({
     id: r.rows[0].id,

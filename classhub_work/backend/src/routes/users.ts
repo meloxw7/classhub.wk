@@ -5,9 +5,11 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import { pool } from '../lib/db';
 import { auth, role, AuthRequest } from '../middleware/auth';
-import { ensureUsernameSchema, USERNAME_RE } from '../lib/username';
+import { ensureUsernameSchema } from '../lib/username';
 import { randomUUID } from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
+import { validate, profileUpdateSchema, changePasswordSchema } from '../lib/validation';
+import { validatePasswordPolicy } from '../lib/passwordPolicy';
 
 async function auditLog(userId: string, action: string, metadata: object, ip: string, userAgent: string | undefined) {
   await pool.query(
@@ -52,27 +54,22 @@ router.get('/me', async (req: AuthRequest, res) => {
   if (!r.rowCount) return res.status(404).json({ message: 'Usuário não encontrado' });
   res.json(r.rows[0]);
 });
-router.put('/me', async (req: AuthRequest, res) => {
-  const body = req.body || {};
-  const name = String(body.name || '').trim();
-  const bio = body.bio === undefined ? undefined : String(body.bio).trim().slice(0, 300);
-  const username =
-    body.username === undefined ? undefined : String(body.username).toLowerCase().trim();
-  if (!name) return res.status(400).json({ message: 'Informe o nome' });
+router.put('/me', validate(profileUpdateSchema), async (req: AuthRequest, res) => {
+  const { name, bio, username } = req.body;
   await ensureUsernameSchema();
   if (username !== undefined) {
-    if (!USERNAME_RE.test(username))
-      return res.status(400).json({
-        message: 'Usuário (@): 3 a 20 caracteres, apenas letras minúsculas, números e _',
-      });
     const taken = await pool.query('SELECT 1 FROM users WHERE username=$1 AND id<>$2', [
       username,
       req.user!.id,
     ]);
     if (taken.rowCount) return res.status(409).json({ message: 'Este @usuário já está em uso' });
   }
-  const sets: string[] = ['name=$1'];
-  const values: any[] = [name];
+  const sets: string[] = [];
+  const values: any[] = [];
+  if (name !== undefined) {
+    values.push(name);
+    sets.push(`name=$${values.length}`);
+  }
   if (bio !== undefined) {
     values.push(bio || null);
     sets.push(`bio=$${values.length}`);
@@ -81,6 +78,7 @@ router.put('/me', async (req: AuthRequest, res) => {
     values.push(username);
     sets.push(`username=$${values.length}`);
   }
+  if (sets.length === 0) return res.status(400).json({ message: 'Nenhum campo para atualizar' });
   values.push(req.user!.id);
   const updated = await pool.query(
     `UPDATE users SET ${sets.join(', ')} WHERE id=$${values.length} RETURNING id,name,username,email,role,avatar_path,bio`,
@@ -88,19 +86,19 @@ router.put('/me', async (req: AuthRequest, res) => {
   );
   const ip = req.ip || 'unknown';
   const userAgent = req.headers['user-agent'];
-  await auditLog(req.user!.id, 'PROFILE_UPDATE', { fields: Object.keys(body) }, ip, userAgent);
+  await auditLog(req.user!.id, 'PROFILE_UPDATE', { fields: Object.keys(req.body) }, ip, userAgent);
   res.json(updated.rows[0]);
 });
-router.put('/password', async (req: AuthRequest, res) => {
-  const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword)
-    return res.status(400).json({ message: 'Preencha a senha atual e a nova senha' });
-  if (String(newPassword).length < 6)
-    return res.status(400).json({ message: 'A nova senha deve ter pelo menos 6 caracteres' });
+router.put('/password', validate(changePasswordSchema), async (req: AuthRequest, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const passwordCheck = validatePasswordPolicy(newPassword);
+  if (!passwordCheck.valid) {
+    return res.status(400).json({ message: passwordCheck.message });
+  }
   const r = await pool.query('SELECT password_hash FROM users WHERE id=$1', [req.user!.id]);
-  if (!r.rowCount || !(await bcrypt.compare(String(currentPassword), r.rows[0].password_hash)))
+  if (!r.rowCount || !(await bcrypt.compare(currentPassword, r.rows[0].password_hash)))
     return res.status(401).json({ message: 'Senha atual incorreta' });
-  const hash = await bcrypt.hash(String(newPassword), 10);
+  const hash = await bcrypt.hash(newPassword, 10);
   await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, req.user!.id]);
   const ip = req.ip || 'unknown';
   const userAgent = req.headers['user-agent'];

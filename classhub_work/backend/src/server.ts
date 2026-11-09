@@ -8,7 +8,9 @@ import { getJwtSecret } from './lib/env';
 import { logger } from './lib/logger';
 import { ensureAdminSchema } from './lib/admin';
 import { initRedis, closeRedis } from './lib/rateLimit';
+import { wsRateLimit } from './lib/rateLimit';
 import { cleanupExpiredTokens, cleanupOldAuditLogs } from './lib/cleanup';
+import { sanitizeChatMessage } from './lib/sanitize';
 async function eventReminders() {
   try {
     const r = await pool.query(
@@ -48,6 +50,9 @@ async function eventReminders() {
 }
 const port = Number(process.env.PORT) || 4000;
 const server = http.createServer(app);
+server.headersTimeout = 30000;
+server.requestTimeout = 30000;
+server.keepAliveTimeout = 5000;
 const wss = new WebSocketServer({ server });
 type ChatEntry = { ws: WebSocket; userId: string; name: string; avatar: string | null };
 const chatRooms = new Map<string, Set<ChatEntry>>();
@@ -100,6 +105,11 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     } catch {
       return;
     }
+    const wsRateLimitResult = await wsRateLimit(user!.id, 30, 60000);
+    if (!wsRateLimitResult.allowed) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Rate limit exceeded. Slow down.' }));
+      return;
+    }
     if (msg?.type === 'join' && user) {
       const room = String(msg.subjectId || '');
       if (!room) return;
@@ -145,9 +155,15 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       return;
     }
     if (msg?.type === 'dm-message' && user && dmRoom) {
-      const content = String(msg.content || '').trim().slice(0, 2000);
+      const wsRateLimitResult = await wsRateLimit(user.id, 20, 60000);
+      if (!wsRateLimitResult.allowed) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Rate limit exceeded. Slow down.' }));
+        return;
+      }
+      const rawContent = String(msg.content || '').trim().slice(0, 2000);
       const recipientId = String(msg.recipientId || '');
-      if (!content || !recipientId) return;
+      if (!rawContent || !recipientId) return;
+      const content = sanitizeChatMessage(rawContent);
       try {
         const r = await pool.query(
           "INSERT INTO direct_messages(sender_id,recipient_id,type,content) VALUES($1,$2,'TEXT',$3) RETURNING *",
@@ -211,10 +227,14 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       return;
     }
     if (msg?.type === 'message' && user && joinedRoom) {
-      const content = String(msg.content || '')
-        .trim()
-        .slice(0, 1000);
-      if (!content) return;
+      const wsRateLimitResult = await wsRateLimit(user.id, 30, 60000);
+      if (!wsRateLimitResult.allowed) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Rate limit exceeded. Slow down.' }));
+        return;
+      }
+      const rawContent = String(msg.content || '').trim().slice(0, 1000);
+      if (!rawContent) return;
+      const content = sanitizeChatMessage(rawContent);
       const room = joinedRoom;
       const self = [...(chatRooms.get(room) || [])].find((e) => e.ws === ws);
       try {

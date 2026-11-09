@@ -127,3 +127,59 @@ export function createRateLimiter(
     next();
   };
 }
+
+export interface WsRateLimitResult {
+  allowed: boolean;
+  remaining: number;
+}
+
+const wsMemoryStore = new Map<string, { count: number; resetTime: number }>();
+
+export async function wsRateLimit(
+  userId: string,
+  maxRequests: number,
+  windowMs: number
+): Promise<WsRateLimitResult> {
+  const key = `ws:${userId}`;
+  const redisClient = getRedis();
+
+  if (redisClient && redisAvailable) {
+    try {
+      const pipeline = redisClient.pipeline();
+      pipeline.incr(key);
+      pipeline.pttl(key);
+      if (await redisClient.ttl(key) === -1) {
+        pipeline.expire(key, Math.ceil(windowMs / 1000));
+      }
+      const results = await pipeline.exec();
+      const count = results?.[0]?.[1] as number;
+      return {
+        allowed: count <= maxRequests,
+        remaining: Math.max(0, maxRequests - count),
+      };
+    } catch {
+      // fallback to memory
+    }
+  }
+
+  return wsMemoryRateLimit(key, maxRequests, windowMs);
+}
+
+function wsMemoryRateLimit(key: string, maxRequests: number, windowMs: number): WsRateLimitResult {
+  const now = Date.now();
+  const entry = wsMemoryStore.get(key);
+  if (!entry || now > entry.resetTime) {
+    wsMemoryStore.set(key, { count: 1, resetTime: now + windowMs });
+    if (wsMemoryStore.size > 5000) {
+      for (const [k, v] of wsMemoryStore.entries()) {
+        if (now > v.resetTime) wsMemoryStore.delete(k);
+      }
+    }
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+  entry.count++;
+  return {
+    allowed: entry.count <= maxRequests,
+    remaining: Math.max(0, maxRequests - entry.count),
+  };
+}

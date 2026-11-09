@@ -5,8 +5,11 @@ import { pool } from '../lib/db';
 import { getJwtSecret } from '../lib/env';
 import { generateToken, hashToken } from '../lib/tokens';
 import { sendMail } from '../lib/mailer';
-import { ensureUsernameSchema, uniqueUsername, USERNAME_RE } from '../lib/username';
+import { ensureUsernameSchema, uniqueUsername } from '../lib/username';
 import { ensureAdminSchema } from '../lib/admin';
+import { verifyTwoFactorToken, consumeBackupCode } from '../lib/twoFactor';
+import { validate, loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/validation';
+import { validatePasswordPolicy } from '../lib/passwordPolicy';
 
 const router = Router();
 
@@ -42,11 +45,11 @@ function clearAuthCookies(res: Response) {
 }
 
 async function issueSession(
-  user: { id: string; name: string; email: string; role: string },
+  user: { id: string; name: string; email: string; role: string; twoFactorEnabled?: boolean },
   remember = false
 ) {
   const token = jwt.sign(
-    { id: user.id, name: user.name, email: user.email, role: user.role },
+    { id: user.id, name: user.name, email: user.email, role: user.role, twoFactorEnabled: user.twoFactorEnabled },
     getJwtSecret(),
     { expiresIn: '2h' }
   );
@@ -98,11 +101,8 @@ async function auditLog(userId: string | null, action: string, metadata: object,
   );
 }
 
-router.post('/login', async (req, res) => {
-  const { email, password, rememberMe } = req.body || {};
-  if (!email || !password)
-    return res.status(400).json({ message: 'E-mail e senha são obrigatórios' });
-  
+router.post('/login', validate(loginSchema), async (req, res) => {
+  const { email, password, rememberMe, twoFactorToken, twoFactorBackupCode } = req.body;
   const ip = req.ip || 'unknown';
   const userAgent = req.headers['user-agent'];
   const normalizedEmail = String(email).toLowerCase().trim();
@@ -118,7 +118,7 @@ router.post('/login', async (req, res) => {
 
   await ensureAdminSchema().catch(() => {});
   const r = await pool.query(
-    'SELECT id,name,username,email,password_hash,role,course,semester,ra,institution,is_admin FROM users WHERE email=$1',
+    'SELECT id,name,username,email,password_hash,role,course,semester,ra,institution,is_admin,two_factor_enabled,two_factor_secret,two_factor_backup_codes FROM users WHERE email=$1',
     [normalizedEmail]
   );
   
@@ -128,66 +128,70 @@ router.post('/login', async (req, res) => {
   }
   
   const u = r.rows[0];
+  
+  if (u.two_factor_enabled) {
+    const hasToken = twoFactorToken && /^\d{6}$/.test(twoFactorToken);
+    const hasBackupCode = twoFactorBackupCode && typeof twoFactorBackupCode === 'string';
+    
+    if (!hasToken && !hasBackupCode) {
+      return res.status(200).json({ 
+        requireTwoFactor: true,
+        message: 'Autenticação de dois fatores necessária' 
+      });
+    }
+    
+    let verified = false;
+    if (hasToken) {
+      verified = verifyTwoFactorToken(u.two_factor_secret, twoFactorToken);
+    } else if (hasBackupCode) {
+      verified = await consumeBackupCode(u.id, twoFactorBackupCode);
+    }
+    
+    if (!verified) {
+      await recordLoginAttempt(normalizedEmail, ip, false);
+      return res.status(401).json({ message: 'Código 2FA inválido ou código de backup já usado' });
+    }
+  }
+  
   await recordLoginAttempt(normalizedEmail, ip, true);
   await auditLog(u.id, 'LOGIN', { rememberMe: !!rememberMe }, ip, userAgent);
   
   const session = await issueSession(u, !!rememberMe);
-  const { password_hash: _hash, ...user } = u;
+  const { password_hash: _hash, two_factor_secret: _secret, two_factor_backup_codes: _codes, ...user } = u;
   setAuthCookies(res, session.token, session.refreshToken, !!rememberMe);
   res.json({ user });
 });
 
-router.post('/register', async (req, res) => {
-  const body = req.body || {};
-  const name = String(body.name || '').trim();
-  const email = String(body.email || '')
-    .toLowerCase()
-    .trim();
-  const password = String(body.password || '');
-  const role = String(body.role || '').toUpperCase();
-  const course = body.course ? String(body.course).trim() : null;
-  const semester = body.semester ? String(body.semester).trim() : null;
-  const ra = body.ra ? String(body.ra).trim() : null;
-  const subjectName = body.subjectName ? String(body.subjectName).trim() : '';
-  const requestedUsername = body.username
-    ? String(body.username).toLowerCase().trim()
-    : '';
+router.post('/register', validate(registerSchema), async (req, res) => {
+  const { name, email, password, role, username: requestedUsername, course, semester, ra, institution, institutionCode, subjectName } = req.body;
+  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedRole = role.toUpperCase();
 
-  if (!name || name.length < 2) return res.status(400).json({ message: 'Informe seu nome completo' });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return res.status(400).json({ message: 'E-mail inválido' });
-  if (password.length < 6)
-    return res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres' });
-  if (role !== 'ALUNO' && role !== 'PROFESSOR')
-    return res.status(400).json({ message: 'Escolha o perfil (aluno ou professor)' });
-  if (requestedUsername && !USERNAME_RE.test(requestedUsername))
-    return res.status(400).json({
-      message: 'Usuário (@): 3 a 20 caracteres, apenas letras minúsculas, números e _',
-    });
+  const passwordCheck = validatePasswordPolicy(password);
+  if (!passwordCheck.valid) {
+    return res.status(400).json({ message: passwordCheck.message });
+  }
 
-  let institution: string | null = null;
-  if (role === 'PROFESSOR') {
-    const institutionCode = String(body.institutionCode || '').trim();
+  let resolvedInstitution: string | null = null;
+  if (normalizedRole === 'PROFESSOR') {
     if (!institutionCode)
-      return res
-        .status(400)
-        .json({ message: 'Professores precisam informar o código da instituição' });
-    institution = INSTITUTIONS[institutionCode.toUpperCase()];
-    if (!institution) return res.status(403).json({ message: 'Código de instituição inválido' });
+      return res.status(400).json({ message: 'Professores precisam informar o código da instituição' });
+    resolvedInstitution = INSTITUTIONS[institutionCode.toUpperCase()];
+    if (!resolvedInstitution) return res.status(403).json({ message: 'Código de instituição inválido' });
     if (!subjectName)
       return res.status(400).json({ message: 'Informe o nome da disciplina que você leciona' });
-  } else if (body.institution) {
-    institution = String(body.institution).trim().slice(0, 120) || null;
+  } else if (institution) {
+    resolvedInstitution = String(institution).trim().slice(0, 120) || null;
   }
 
   await ensureUsernameSchema();
-  const exists = await pool.query('SELECT 1 FROM users WHERE email=$1', [email]);
+  const exists = await pool.query('SELECT 1 FROM users WHERE email=$1', [normalizedEmail]);
   if (exists.rowCount) return res.status(409).json({ message: 'Este e-mail já está cadastrado' });
   if (requestedUsername) {
     const taken = await pool.query('SELECT 1 FROM users WHERE username=$1', [requestedUsername]);
     if (taken.rowCount) return res.status(409).json({ message: 'Este @usuário já está em uso' });
   }
-  const username = requestedUsername || (await uniqueUsername(name));
+  const finalUsername = requestedUsername || (await uniqueUsername(name));
 
   const hash = await bcrypt.hash(password, 10);
   const client = await pool.connect();
@@ -198,10 +202,10 @@ router.post('/register', async (req, res) => {
       `INSERT INTO users(name,email,password_hash,role,course,semester,ra,institution,username)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
        RETURNING id,name,email,role,course,semester,ra,institution,username`,
-      [name, email, hash, role, course, semester, ra, institution, username]
+      [name, normalizedEmail, hash, normalizedRole, course, semester, ra, resolvedInstitution, finalUsername]
     );
     u = r.rows[0];
-    if (role === 'PROFESSOR') {
+    if (normalizedRole === 'PROFESSOR') {
       await client.query('INSERT INTO subjects(name,professor_id) VALUES($1,$2)', [
         subjectName,
         u.id,
@@ -220,14 +224,14 @@ router.post('/register', async (req, res) => {
   const ip = req.ip || 'unknown';
   const userAgent = req.headers['user-agent'];
   await auditLog(u.id, 'REGISTER', { role: u.role }, ip, userAgent);
-  res.status(201).json({ user: u });
+  res.status(201).json({ user: { ...u, twoFactorEnabled: false } });
 });
 
 router.post('/refresh', async (req, res) => {
   const refreshToken = req.cookies?.refresh_token;
   if (!refreshToken) return res.status(401).json({ message: 'Sessão expirada' });
   const r = await pool.query(
-    `SELECT rt.id AS rt_id, u.id, u.name, u.email, u.role
+    `SELECT rt.id AS rt_id, u.id, u.name, u.email, u.role, u.two_factor_enabled
      FROM refresh_tokens rt
      JOIN users u ON u.id = rt.user_id
      WHERE rt.token_hash = $1 AND rt.revoked_at IS NULL AND rt.expires_at > NOW()`,
@@ -258,53 +262,53 @@ router.post('/logout', async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/forgot', async (req, res) => {
-  const { email } = req.body || {};
+router.post('/forgot', validate(forgotPasswordSchema), async (req, res) => {
+  const { email } = req.body;
   const ip = req.ip || 'unknown';
   const userAgent = req.headers['user-agent'];
-  if (email) {
-    const r = await pool.query('SELECT id, name FROM users WHERE email = $1', [String(email)]);
-    if (r.rowCount) {
-      const token = generateToken();
-      await pool.query(
-        "INSERT INTO password_resets(user_id, token_hash, expires_at) VALUES($1, $2, NOW() + INTERVAL '1 hour')",
-        [r.rows[0].id, hashToken(token)]
+  const r = await pool.query('SELECT id, name FROM users WHERE email = $1', [email]);
+  if (r.rowCount) {
+    const token = generateToken();
+    await pool.query(
+      "INSERT INTO password_resets(user_id, token_hash, expires_at) VALUES($1, $2, NOW() + INTERVAL '1 hour')",
+      [r.rows[0].id, hashToken(token)]
+    );
+    await auditLog(r.rows[0].id, 'PASSWORD_RESET_REQUEST', {}, ip, userAgent);
+    const base = process.env.CLIENT_URL || 'http://localhost:5173';
+    const link = `${base}/resetar-senha?token=${encodeURIComponent(token)}`;
+    try {
+      await sendMail(
+        email,
+        'ClassHub — Recuperação de senha',
+        `<p>Olá, ${r.rows[0].name}.</p>
+         <p>Recebemos uma solicitação para redefinir sua senha. O link abaixo expira em 1 hora:</p>
+         <p><a href="${link}">Redefinir minha senha</a></p>
+         <p>Se não foi você quem solicitou, ignore este e-mail.</p>`
       );
-      await auditLog(r.rows[0].id, 'PASSWORD_RESET_REQUEST', {}, ip, userAgent);
-      const base = process.env.CLIENT_URL || 'http://localhost:5173';
-      const link = `${base}/resetar-senha?token=${encodeURIComponent(token)}`;
-      try {
-        await sendMail(
-          String(email),
-          'ClassHub — Recuperação de senha',
-          `<p>Olá, ${r.rows[0].name}.</p>
-           <p>Recebemos uma solicitação para redefinir sua senha. O link abaixo expira em 1 hora:</p>
-           <p><a href="${link}">Redefinir minha senha</a></p>
-           <p>Se não foi você quem solicitou, ignore este e-mail.</p>`
-        );
-      } catch (error) {
-        console.error('Falha ao enviar e-mail de recuperação:', error);
-      }
+    } catch (error) {
+      console.error('Falha ao enviar e-mail de recuperação:', error);
     }
   }
   res.json({ ok: true });
 });
 
-router.post('/reset', async (req, res) => {
-  const { token, newPassword } = req.body || {};
+router.post('/reset', validate(resetPasswordSchema), async (req, res) => {
+  const { token, newPassword } = req.body;
   const ip = req.ip || 'unknown';
   const userAgent = req.headers['user-agent'];
-  if (!token || !newPassword)
-    return res.status(400).json({ message: 'Informe o token e a nova senha' });
-  if (String(newPassword).length < 6)
-    return res.status(400).json({ message: 'A nova senha deve ter pelo menos 6 caracteres' });
   const r = await pool.query(
     'SELECT id, user_id FROM password_resets WHERE token_hash = $1 AND used_at IS NULL AND expires_at > NOW()',
-    [hashToken(String(token))]
+    [hashToken(token)]
   );
   if (!r.rowCount)
     return res.status(400).json({ message: 'Link inválido ou expirado. Solicite um novo.' });
-  const hash = await bcrypt.hash(String(newPassword), 10);
+
+  const passwordCheck = validatePasswordPolicy(newPassword);
+  if (!passwordCheck.valid) {
+    return res.status(400).json({ message: passwordCheck.message });
+  }
+
+  const hash = await bcrypt.hash(newPassword, 10);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

@@ -3,6 +3,9 @@ import { pool } from '../lib/db';
 import { auth, AuthRequest, role } from '../middleware/auth';
 import { notifyAllStudents } from '../lib/notify';
 import { isUserAdmin } from '../lib/admin';
+import { sanitizeNotificationContent } from '../lib/sanitize';
+import { validate, noticeCreateSchema } from '../lib/validation';
+
 const router = Router();
 router.use(auth);
 router.get('/', async (req, res) => {
@@ -11,13 +14,12 @@ router.get('/', async (req, res) => {
   );
   res.json(r.rows);
 });
-router.post('/', role('PROFESSOR'), async (req: AuthRequest, res) => {
+router.post('/', role('PROFESSOR'), validate(noticeCreateSchema), async (req: AuthRequest, res) => {
   const { subjectId, title, content, pinned } = req.body;
-  if (!title || !content)
-    return res.status(400).json({ message: 'Título e conteúdo são obrigatórios' });
+  const sanitizedContent = sanitizeNotificationContent(content);
   const r = await pool.query(
     'INSERT INTO notices(subject_id,author_id,title,content,pinned) VALUES($1,$2,$3,$4,$5) RETURNING *',
-    [subjectId, req.user!.id, title, content, !!pinned]
+    [subjectId, req.user!.id, title, sanitizedContent, !!pinned]
   );
   await notifyAllStudents('Novo aviso', title, 'NOTICE');
   res.status(201).json(r.rows[0]);
